@@ -1,0 +1,9 @@
+#!/bin/bash
+
+COMMIT=$1
+
+#if we have access to TEMP, copy it
+#into the commit message
+if [ ! -z $TEMP ]; then
+	cat $TEMP > $COMMIT
+fi
