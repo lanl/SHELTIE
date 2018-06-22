@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #log path - should be consistent with other scripts
-LOG=.commit.log
+#setup.sh will insert LOG's definition here
 
 #only log anything if commit-msg already set up the log file
 if [ -f "$LOG" ]; then
@@ -20,7 +20,7 @@ if [ -f "$LOG" ]; then
 	printf '}\n' >> $LOG
 
 	#save log as a git note
-	git notes add $LOG \
+	git notes add -F $LOG \
 	-m "productivity log for commit $CUR_HASH in branch $CUR_BRANCH"
 
 	#delete log file, now that it has been saved as a git note

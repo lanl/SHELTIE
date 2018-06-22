@@ -1,15 +1,13 @@
 #!/bin/bash
 
-COMMIT=$1
-
 #log path - should be consistent with other scripts
-LOG=.commit.log
+#setup.sh will insert LOG's definition here
+
+COMMIT=$1
 
 #data about project
 #EXTENSIONS=( '.c' '.cc' '.h') #not working here - edit on line 155 instead
 WORK_TAGS=(MPI OpenMP Cuda Kokkos debugging optimisation "domain specific work")
-
-echo $(git rev-parse --abbrev-ref HEAD)
 
 #initialise temp
 echo '' > $LOG
@@ -37,7 +35,7 @@ do
 	read record_log
 done
 
-if [ "$record_log" ]; then
+if [ "$record_log" = 'n' ]; then
 	#close std out
 	exec <&-
 	
@@ -127,13 +125,10 @@ printf '"}' >> $LOG
 #	name_arg=$name_arg'-name "*'$extension'"'
 #done
 
-#get a list of all the files in 
-#the main directory of the repo,
+#get a list of all the files in the main directory of the repo,
 #with each file described in JSON:
 #	{"name":$filename,{"size":$bytes},{"last_modified":$UNIX_epoch_time}}
 files=$(find . -type f \( -name "*.c" -o -name "*.cc" -o -name "*.h" \))
-echo $files
-echo $name_arg
 
 #write the list to the commit file
 printf '{"files":\n' >> $LOG

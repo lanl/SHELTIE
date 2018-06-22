@@ -23,9 +23,14 @@ fi
 
 #setup the main repo hooks
 for hook in commit-msg post-commit ; do
+	hook_copy=$MAIN_REPO/.git/hooks/$hook
+
 	#move over the main-repo-side hooks
-	cp $hook $MAIN_REPO/.git/hooks/$hook
+	cp $hook $hook_copy 
 	
+	#make sure LOG variable line up in all the hooks
+	sed -i "3iLOG=.commit.log" $hook_copy
+
 	#make sure the hooks are executable
-	chmod +x $MAIN_REPO/.git/hooks/$hook
+	chmod +x $hook_copy
 done
