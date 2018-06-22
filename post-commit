@@ -19,9 +19,13 @@ if [ -f "$LOG" ]; then
 	#mark end of git info
 	printf '}\n' >> $LOG
 
+	#export GIT_NAMESPACE=logs
+
 	#save log as a git note
 	git notes add -F $LOG \
 	-m "productivity log for commit $CUR_HASH in branch $CUR_BRANCH"
+
+	#unset GIT_NAMESPACE
 
 	#delete log file, now that it has been saved as a git note
 	rm $LOG
