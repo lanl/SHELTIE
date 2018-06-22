@@ -3,10 +3,10 @@
 COMMIT=$1
 
 #folder/file paths - should be consistent with other scripts
-MAIN_REPO_PATH=$PWD
+#MAIN_REPO_PATH=$PWD
 #NOTE: this script is run from the top level
 #      of the repo NOT in the .git folder
-LOGGING_REPO_PATH=$MAIN_REPO_PATH/logs
+#LOGGING_REPO_PATH=$MAIN_REPO_PATH/logs
 TEMP=$LOGGING_REPO_PATH/.git/temp.txt
 
 #data about project
