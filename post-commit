@@ -1,0 +1,25 @@
+#!/bin/bash
+
+#log path - should be consistent with other scripts
+LOG=.commit.log
+
+#mark start of git info
+printf '{"git_info":\n' >> $LOG
+
+#record the commit hash
+CUR_HASH=$(git rev-parse HEAD)
+printf '\t{"commit_hash":%s},\n' $CUR_HASH >> $LOG
+
+#record the current branch
+CUR_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+printf '\t{"branch":%s}\n' "$CUR_BRANCH" >> $LOG
+
+#mark end of git info
+printf '}\n' >> $LOG
+
+#save log as a git note
+git notes add $LOG \
+-m "productivity log for commit $CUR_HASH in branch $CUR_BRANCH"
+
+#delete log file, now that it has been saved as a git note
+rm $LOG
