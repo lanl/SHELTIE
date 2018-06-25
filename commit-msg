@@ -7,7 +7,8 @@ COMMIT=$1
 
 #data about project
 #EXTENSIONS=( '.c' '.cc' '.h') #not working here - edit on line 155 instead
-WORK_TAGS=(MPI OpenMP Cuda Kokkos debugging optimisation "domain specific work")
+TIME_CATEGORIES=(planning coding debugging optimising)
+BOOLEAN_TAGS=(MPI OpenMP Cuda Kokkos "domain specific work")
 
 #initialise temp
 echo '' > $LOG
@@ -30,7 +31,7 @@ exec < /dev/tty
 while [ "$record_log" != 'y' ] \
 	 && [ "$record_log" != 'n' ]
 do
-	printf 'Would you like to record a productivity'
+	printf 'Would you like to record a productivity\n'
 	printf 'log for this commit? (y/n)'
 	read record_log
 done
@@ -45,35 +46,56 @@ if [ "$record_log" = 'n' ]; then
 	#and stop the script
 	exit 0
 fi
+echo ''
 
-#get an estimate of the difficulty of the work
-#(must be an integer between 1 and 5)
-difficulty=0
-while [[ ! $difficulty =~ ^[0-9]+$ ]] \
-      || [ 1 -gt $difficulty ] \
-      || [ $difficulty -gt 5 ]
-do
-	echo 'Please rate the difficulty of the work'
-	echo 'contained in this commit on a scale of 1-5:'
-	echo '(1 - very easy, 3 - about average, 5 - very hard)'
-	read difficulty
-done
-printf '\t{"difficulty":%d},\n' $difficulty >> $LOG
+printf '\t{"time_categories":\n' >> $LOG
+for ((i = 0; i < ${#TIME_CATEGORIES[@]}; i++)) ; do
+	#if this isn't the first category, add the trailing comma
+	if (($i != 0)) ; then
+		printf ',\n' >> $LOG
+	fi
 
-#get an estimate of time spent on this commit
-time_spent=
-while [[ ! $time_spent =~ ^[0-9]+(\.[0-9]+)?$ ]]; do
-	echo 'Please estimate how many hours you spent'
-	echo 'on the work involved in this commit'
-	read time_spent
+	category="${TIME_CATEGORIES[$i]}"
+
+	#mark the start of this category
+	printf '\t\t{"%s":\n' $category >> $LOG
+
+	#get an estimate of time spent on this category for this commit
+	time_spent=
+	while [[ ! "$time_spent" =~ ^[0-9]+(\.[0-9]+)?$ ]]; do
+		printf 'Please estimate how many hours you spent\n'
+		printf 'on %s for the work in this commit:' $category
+		read time_spent
+	done
+	echo ''
+	printf '\t\t{"time_spent":%f},' $time_spent >> $LOG
+
+	#0 indicates not completed or N/A
+	difficulty=0
+	#only ask about how hard the work was if they spent time on it	
+	if [[ ! "$time_spent" =~ ^[0]+(\.[0]+)?$ ]]; then
+		#get an estimate of the difficulty of the work
+		#(must be an integer between 1 and 5)
+		while [[ ! "$difficulty" =~ ^[0-9]+$ ]] \
+					|| [ 1 -gt "$difficulty" ] \
+					|| [ "$difficulty" -gt 5 ]
+		do
+			printf 'Please rate the difficulty of the %s\n' $category
+			printf 'you did for the work in this commit on a scale of 1-5\n'
+			printf '(1 - very easy, 3 - about average, 5 - very hard):'
+			read difficulty
+		done
+		echo ''
+	fi
+	printf '\t\t\t{"difficulty":%d}\n\t\t}' $difficulty >> $LOG
 done
-printf '\t{"time_spent":%f},' $time_spent >> $LOG
+printf '\n\t}' >> $LOG
 
 #ask the user about which tags are relevant to their work
 printf '\t{"tags":\n' >> $LOG
-for ((i = 0; i < ${#WORK_TAGS[@]}; i++)) ; do
+for ((i = 0; i < ${#BOOLEAN_TAGS[@]}; i++)) ; do
 	tag_used=
-	tag="${WORK_TAGS[$i]}"
+	tag="${BOOLEAN_TAGS[$i]}"
 	
 	#add trailing comma and newline if this isn't the
 	#first tag
@@ -95,6 +117,7 @@ for ((i = 0; i < ${#WORK_TAGS[@]}; i++)) ; do
 	else
 		printf '\t\t{"%s":false}' "$tag" >> $LOG
 	fi
+	echo ''
 done
 #end the tag section
 printf '\n\t}\n' >> $LOG
