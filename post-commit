@@ -22,8 +22,9 @@ if [ -f "$LOG" ]; then
 	#export GIT_NAMESPACE=logs
 
 	#save log as a git note
-	git notes add -F $LOG \
-	-m "productivity log for commit $CUR_HASH in branch $CUR_BRANCH"
+	git notes --ref refs/notes/productivity \
+	add -F $LOG \
+	-m "productivity log for commit $CUR_HASH in branch $CUR_BRANCH" \
 
 	#unset GIT_NAMESPACE
 
