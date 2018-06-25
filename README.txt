@@ -24,9 +24,9 @@ Usage:
 	After you finialise your commit message, you will be asked if you would like
 	to create a commit log. If you answer yes, you will be prompted to answer a 
 	few quick questions about the work you just commited. After answering, your
-	commit will procede like normal. Behind the scenes, though, your answers, plus
-	a few pieces of metadata which are gathered automatically will be stored as a
-	git note on your commit.
+	commit will proceede like normal. Behind the scenes, though, your answers,
+	plus a few pieces of metadata which are gathered automatically will be stored 
+	as a git note on your commit.
 
 	You can view the log entries for a given commit using the command
 		git notes --ref refs/notes/productivity show <commit hash>
