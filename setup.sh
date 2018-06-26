@@ -31,7 +31,7 @@ for hook in commit-msg post-commit ; do
 	cp $hook $hook_copy 
 	
 	#make sure LOG variable line up in all the hooks
-	sed -i "3iLOG=.commit.log" $hook_copy
+	#sed -i "3iLOG=.commit.log" $hook_copy
 
 	#make sure the hooks are executable
 	chmod +x $hook_copy
