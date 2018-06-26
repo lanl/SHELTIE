@@ -13,10 +13,9 @@ Dependencies:
 
 Setup:
 
-	(1) switch into this directory
-	(2) run setup.sh, optionally passing in the path to the main repo
+	(1) run setup.sh, optionally passing in the path to the main repo
 				setup.sh <main repo path>
-  		[by default, <main repo path> is one level above where setup.sh is run]
+  		[by default, <main repo path> is one level above where setup.sh is stored]
 
 Usage:
 
