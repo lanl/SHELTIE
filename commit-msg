@@ -7,7 +7,7 @@ COMMIT=$1
 
 #data about project
 #EXTENSIONS=( '.c' '.cc' '.h') #not working here - edit on line 155 instead
-WORK_STAGES=(planning coding debugging optimising)
+WORK_STAGES=(planning coding refactoring debugging optimising)
 FRAMEWORKS=(MPI OpenMP Cuda Kokkos "domain specific work")
 
 function rate_on_scale {
