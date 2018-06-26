@@ -1,4 +1,5 @@
 #!/bin/bash
+#setup.sh will insert LOG's definition here
 
 #log path - should be consistent with other scripts
 LOG=.commit.log
@@ -6,7 +7,7 @@ LOG=.commit.log
 COMMIT=$1
 
 #data about project
-#EXTENSIONS=( '.c' '.cc' '.h') #not working here - edit on line 155 instead
+#EXTENSIONS=( '.c' '.cc' '.h') #not working here - edit on line 227 instead
 WORK_STAGES=(planning coding refactoring debugging optimising)
 FRAMEWORKS=(MPI OpenMP Cuda Kokkos "domain specific work")
 
@@ -223,7 +224,7 @@ printf '"}' >> $LOG
 #get a list of all the files in the main directory of the repo,
 #with each file described in JSON:
 #	{"name":$filename,{"size":$bytes},{"last_modified":$UNIX_epoch_time}}
-files=$(find . -type f \( -name "*.c" -o -name "*.cc" -o -name "*.h" \))
+files=$(find . -type f \( -name "*.c" -o -name "*.cc" -o -name "*.cpp" -o -name "*.h" -o -name "*.f*" -o -name "*.F*" \))
 
 #write the list to the commit file
 printf '{"files":\n' >> $LOG
