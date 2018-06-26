@@ -7,8 +7,28 @@ COMMIT=$1
 
 #data about project
 #EXTENSIONS=( '.c' '.cc' '.h') #not working here - edit on line 155 instead
-TIME_CATEGORIES=(planning coding debugging optimising)
-BOOLEAN_TAGS=(MPI OpenMP Cuda Kokkos "domain specific work")
+WORK_STAGES=(planning coding debugging optimising)
+FRAMEWORKS=(MPI OpenMP Cuda Kokkos "domain specific work")
+
+function rate_on_scale {
+	#give function args names
+	local message="$1"
+	local __result_var="$2"
+
+	local rating=
+	#get a rating
+	#(must be an integer between 1 and 7)
+	while [[ ! "$rating" =~ ^[0-9]+$ ]] \
+				|| [ 1 -gt "$rating" ] \
+				|| [ "$rating" -gt 7 ]
+	do
+		printf "$message"
+		read rating
+	done
+	echo ''
+
+	eval $__result_var="'$rating'"
+}
 
 #initialise temp
 echo '' > $LOG
@@ -48,23 +68,26 @@ if [ "$record_log" = 'n' ]; then
 fi
 echo ''
 
+echo '###############'
+echo '# Work Stages #'
+echo '###############'
 printf '\t{"time_categories":\n' >> $LOG
-for ((i = 0; i < ${#TIME_CATEGORIES[@]}; i++)) ; do
-	#if this isn't the first category, add the trailing comma
+for ((i = 0; i < ${#WORK_STAGES[@]}; i++)) ; do
+	#if this isn't the first stage, add the trailing comma
 	if (($i != 0)) ; then
 		printf ',\n' >> $LOG
 	fi
 
-	category="${TIME_CATEGORIES[$i]}"
+	stage="${WORK_STAGES[$i]}"
 
-	#mark the start of this category
-	printf '\t\t{"%s":\n' $category >> $LOG
+	#mark the start of this stage
+	printf '\t\t{"%s":\n' $stage >> $LOG
 
-	#get an estimate of time spent on this category for this commit
+	#get an estimate of time spent on this stage for this commit
 	time_spent=
 	while [[ ! "$time_spent" =~ ^[0-9]+(\.[0-9]+)?$ ]]; do
 		printf 'Please estimate how many hours you spent\n'
-		printf 'on %s for the work in this commit:' $category
+		printf 'on %s for the work in this commit:' $stage
 		read time_spent
 	done
 	echo ''
@@ -75,27 +98,24 @@ for ((i = 0; i < ${#TIME_CATEGORIES[@]}; i++)) ; do
 	#only ask about how hard the work was if they spent time on it	
 	if [[ ! "$time_spent" =~ ^[0]+(\.[0]+)?$ ]]; then
 		#get an estimate of the difficulty of the work
-		#(must be an integer between 1 and 5)
-		while [[ ! "$difficulty" =~ ^[0-9]+$ ]] \
-					|| [ 1 -gt "$difficulty" ] \
-					|| [ "$difficulty" -gt 5 ]
-		do
-			printf 'Please rate the difficulty of the %s\n' $category
-			printf 'you did for the work in this commit on a scale of 1-5\n'
-			printf '(1 - very easy, 3 - about average, 5 - very hard):'
-			read difficulty
-		done
-		echo ''
+		#(must be an integer between 1 and 7)
+		message="Please rate the difficulty of the $stage\n"\
+"you did for the work in this commit on a scale of 1-7\n"\
+"(1 - very easy, 4 - about average, 7 - very hard):"
+		rate_on_scale "$message" difficulty
 	fi
 	printf '\t\t\t{"difficulty":%d}\n\t\t}' $difficulty >> $LOG
 done
 printf '\n\t}' >> $LOG
 
+echo '###########################'
+echo '# Parrallelism Frameworks #'
+echo '###########################'
 #ask the user about which tags are relevant to their work
 printf '\t{"tags":\n' >> $LOG
-for ((i = 0; i < ${#BOOLEAN_TAGS[@]}; i++)) ; do
+for ((i = 0; i < ${#FRAMEWORKS[@]}; i++)) ; do
 	tag_used=
-	tag="${BOOLEAN_TAGS[$i]}"
+	tag="${FRAMEWORKS[$i]}"
 	
 	#add trailing comma and newline if this isn't the
 	#first tag
@@ -120,7 +140,16 @@ for ((i = 0; i < ${#BOOLEAN_TAGS[@]}; i++)) ; do
 	echo ''
 done
 #end the tag section
-printf '\n\t}\n' >> $LOG
+printf '\n\t},\n' >> $LOG
+
+echo '###########################'
+echo '# Overall Task Assessment #'
+echo '###########################'
+
+#start NASA Task Load Index accessment
+printf '\t{"NASA-TLX":\n' >> $LOG
+
+printf '\t}' >> $LOG
 
 #close stdin back up
 exec <&-
