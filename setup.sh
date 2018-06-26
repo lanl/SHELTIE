@@ -1,6 +1,8 @@
 #!/bin/bash
 
-#NOTE: this should be run from the logging script repo
+#cd into the directory where this script is stored
+cd "${BASH_SOURCE%/*}" || exit
+
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 	#provide help info
 	echo "Sets up the logging scripts in the specified repo."
