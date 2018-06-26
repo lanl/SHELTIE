@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #log path - should be consistent with other scripts
-#setup.sh will insert LOG's definition here
 LOGS_REF=refs/notes/productivity
+LOG=.commit.log
 
 #only log anything if commit-msg already set up the log file
 if [ -f "$LOG" ]; then

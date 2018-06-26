@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #log path - should be consistent with other scripts
-#setup.sh will insert LOG's definition here
+LOG=.commit.log
 
 COMMIT=$1
 
