@@ -108,9 +108,9 @@ for ((i = 0; i < ${#WORK_STAGES[@]}; i++)) ; do
 done
 printf '\n\t}' >> $LOG
 
-echo '###########################'
-echo '# Parrallelism Frameworks #'
-echo '###########################'
+echo '##########################'
+echo '# Parallelism Frameworks #'
+echo '##########################'
 #ask the user about which tags are relevant to their work
 printf '\t{"tags":\n' >> $LOG
 for ((i = 0; i < ${#FRAMEWORKS[@]}; i++)) ; do
@@ -172,22 +172,22 @@ printf '\t\t{"temporal_demand":%d},' $temporal_demand >> $LOG
 
 message="Please rate your performance on a scale of 1-7.\n"\
 "How successful were you in accomplishing what you were asked to do?\n"\
-"How satisfied were you with your performance?\n"
+"How satisfied were you with your performance?\n"\
 "(1 - perfect, 4 - about average, 7 - failure):"
 rate_on_scale "$message" performance
 printf '\t\t{"performance":%d},' $performance >> $LOG
 
 message="Please rate the effort involved in this work on a scale of 1-7.\n"\
 "How hard did you have to work (mentally and physically) to accomplish\n"\
-"your level of performance?\n"
-"(1 - very low, 4 - about average 7, - very high):"
+"your level of performance?\n"\
+"(1 - very low, 4 - about average, 7 - very high):"
 rate_on_scale "$message" effort
 printf '\t\t{"effort":%d},' $effort >> $LOG
 
 message="Please rate your frustration during this work on a scale of 1-7.\n"\
 "How irritated, stressed, and annoyed versus content, relaxed,\n"\
-"and complacent did you feel during your work?\n"
-"(1 - very low, 4 - about average 7, - very high):"
+"and complacent did you feel during your work?\n"\
+"(1 - very low, 4 - about average, 7 - very high):"
 rate_on_scale "$message" frustration
 printf '\t\t{"frustration":%d}' $frustration >> $LOG
 
