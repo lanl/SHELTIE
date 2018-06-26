@@ -142,13 +142,54 @@ done
 #end the tag section
 printf '\n\t},\n' >> $LOG
 
-echo '###########################'
-echo '# Overall Task Assessment #'
-echo '###########################'
+echo '##################'
+echo '# Total Workload #'
+echo '##################'
 
 #start NASA Task Load Index accessment
 printf '\t{"NASA-TLX":\n' >> $LOG
 
+message="On a scale from 1-7, how mentally demanding was this work?"\
+"How much mental and perceptual activity was required?"\
+"Was the task easy or demanding, simple or complex?"\
+"(1 - very low, 4 - about average, 7 - very high):"
+rate_on_scale "$message" mental_demand
+printf '\t\t{"mental_demand":%d},' $mental_demand >> $LOG
+
+message="On a scale from 1-7, how physically demanding was this work?"\
+"How much physical activity was required?"\
+"Was the task easy or demanding, slack or strenuous?"\
+"(1 - very low, 4 - about average, 7 - very high):"
+rate_on_scale "$message" physical_demand
+printf '\t\t{"physical_demand":%d},' $physical_demand >> $LOG
+
+message="On a scale from 1-7, how hurried or rushed was this work?"\
+"How much time pressure did you feel due to the pace?"\
+"at which the work occured? Was the pace slow or rapid?"\
+"(1 - very low, 4 - about average, 7 - very high):"
+rate_on_scale "$message" temporal_demand
+printf '\t\t{"temporal_demand":%d},' $temporal_demand >> $LOG
+
+message="On a scale from 1-7, how successful were you in accomplishing"\
+"what you were asked to do? How satisfied were you with your performance?"
+"(1 - perfect, 4 - about average, 7 - failure):"
+rate_on_scale "$message" performance
+printf '\t\t{"performance":%d},' $performance >> $LOG
+
+message="On a scale from 1-7, how hard did you have to work to accomplish"\
+"your level of performance?"
+"(1 - very low, 4 - about average 7, - very high):"
+rate_on_scale "$message" effort
+printf '\t\t{"effort":%d},' $effort >> $LOG
+
+message="On a scale from 1-7, how irritated, stressed, and annoyed versus"\
+"content, relaxed, and complacent did you feel during your work?"
+"(1 - very low, 4 - about average 7, - very high):"
+rate_on_scale "$message" effort
+printf '\t\t{"effort":%d},' $effort >> $LOG
+
+
+#end NASA-TLX info
 printf '\t}' >> $LOG
 
 #close stdin back up
