@@ -8,8 +8,8 @@ COMMIT=$1
 
 #data about project
 #EXTENSIONS=( '.c' '.cc' '.h') #not working here - edit on line 227 instead
-WORK_STAGES=(planning coding refactoring debugging optimising)
-FRAMEWORKS=(MPI OpenMP Cuda Kokkos "domain specific work")
+WORK_STAGES=("researching in the literature" writing revising)
+FRAMEWORKS=(LaTex)
 
 function rate_on_scale {
 	#give function args names
