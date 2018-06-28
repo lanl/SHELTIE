@@ -1,13 +1,14 @@
 #!/bin/bash
+#setup.sh will insert LOG's definition here
 
 #log path - should be consistent with other scripts
-#setup.sh will insert LOG's definition here
+LOG=.commit.log
 
 COMMIT=$1
 
 #data about project
-#EXTENSIONS=( '.c' '.cc' '.h') #not working here - edit on line 155 instead
-WORK_STAGES=(planning coding debugging optimising)
+#EXTENSIONS=( '.c' '.cc' '.h') #not working here - edit on line 227 instead
+WORK_STAGES=(planning coding refactoring debugging optimising)
 FRAMEWORKS=(MPI OpenMP Cuda Kokkos "domain specific work")
 
 function rate_on_scale {
@@ -156,12 +157,13 @@ message="Please rate the mental demand of this work on a scale of 1-7.\n"\
 rate_on_scale "$message" mental_demand
 printf '\t\t{"mental_demand":%d},' $mental_demand >> $LOG
 
-message="Please rate the physical demand of this work on a scale of 1-7.\n"\
-"How much physical activity was required?\n"\
-"Was the task easy or demanding, slack or strenuous?\n"\
-"(1 - very low, 4 - about average, 7 - very high):"
-rate_on_scale "$message" physical_demand
-printf '\t\t{"physical_demand":%d},' $physical_demand >> $LOG
+#NOTE: physical effort ommited; deemed irrelevant
+#message="Please rate the physical demand of this work on a scale of 1-7.\n"\
+#"How much physical activity was required?\n"\
+#"Was the task easy or demanding, slack or strenuous?\n"\
+#"(1 - very low, 4 - about average, 7 - very high):"
+#rate_on_scale "$message" physical_demand
+#printf '\t\t{"physical_demand":%d},' $physical_demand >> $LOG
 
 message="Please rate the temporal demand of this work on a scale of 1-7.\n"\
 "How much time pressure did you feel due to the pace?\n"\
@@ -178,8 +180,7 @@ rate_on_scale "$message" performance
 printf '\t\t{"performance":%d},' $performance >> $LOG
 
 message="Please rate the effort involved in this work on a scale of 1-7.\n"\
-"How hard did you have to work (mentally and physically) to accomplish\n"\
-"your level of performance?\n"\
+"How hard did you have to work to accomplish your level of performance?\n"\
 "(1 - very low, 4 - about average, 7 - very high):"
 rate_on_scale "$message" effort
 printf '\t\t{"effort":%d},' $effort >> $LOG
@@ -223,7 +224,7 @@ printf '"}' >> $LOG
 #get a list of all the files in the main directory of the repo,
 #with each file described in JSON:
 #	{"name":$filename,{"size":$bytes},{"last_modified":$UNIX_epoch_time}}
-files=$(find . -type f \( -name "*.c" -o -name "*.cc" -o -name "*.h" \))
+files=$(find . -type f \( -name "*.c" -o -name "*.cc" -o -name "*.cpp" -o -name "*.h" -o -name "*.f*" -o -name "*.F*" \))
 
 #write the list to the commit file
 printf '{"files":\n' >> $LOG
