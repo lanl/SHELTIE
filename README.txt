@@ -31,6 +31,13 @@ Usage:
 		git notes --ref refs/notes/productivity show <commit hash>
 	ommiting <commit hash> will show the log for the current HEAD.
 
+	Similiarly, if you ever need to make chages to your logs, (for instance, if you
+	entered a value wrong, or there was sensitive information in your commit message)
+	you can edit the log file for a specififc commit using the command
+		git otes --ref refs/notes/productivity edit <commit hash>
+	as above, ommiting <commit hash> will allow you to edit the log for the
+	current HEAD.
+
 Customisation:
 	You can change the specific areas you will be asked about by editing
 	the lists at the top of commit-msg, and then rerunning setup.sh to get

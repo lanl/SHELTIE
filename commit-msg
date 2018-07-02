@@ -52,7 +52,7 @@ exec < /dev/tty
 while [ "$record_log" != 'y' ] \
 	 && [ "$record_log" != 'n' ]
 do
-	printf 'Would you like to answer question for\n'
+	printf 'Would you like to answer questions for\n'
 	printf 'the productivity log for this commit? (y/n)'
 	read record_log
 done
@@ -75,13 +75,13 @@ if [ "$record_log" = 'y' ]; then
 		stage="${WORK_STAGES[$i]}"
 
 		#mark the start of this stage
-		printf '\t\t{"%s":\n' $stage >> $LOG
+		printf '\t\t{"%s":\n' "$stage" >> $LOG
 
 		#get an estimate of time spent on this stage for this commit
 		time_spent=
 		while [[ ! "$time_spent" =~ ^[0-9]+(\.[0-9]+)?$ ]]; do
 			printf 'Please estimate how many hours you spent\n'
-			printf 'on %s for the work in this commit:' $stage
+			printf 'on %s for the work in this commit:' "$stage"
 			read time_spent
 		done
 		echo ''
