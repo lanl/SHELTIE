@@ -52,8 +52,8 @@ exec < /dev/tty
 while [ "$record_log" != 'y' ] \
 	 && [ "$record_log" != 'n' ]
 do
-	printf 'Would you like to record a productivity\n'
-	printf 'log for this commit? (y/n)'
+	printf 'Would you like to answer question for\n'
+	printf 'the productivity log for this commit? (y/n)'
 	read record_log
 done
 echo ''
