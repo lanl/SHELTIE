@@ -208,7 +208,6 @@ do
     f=$(find . -type f -name "*.$extension")                                       
     files+=" $f"                                                                   
 done                                                                               
-echo $files
 
 IFS=' ' read -r -a files <<< "$files"
 #write info on every file in the list to the log file
