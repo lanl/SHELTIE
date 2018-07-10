@@ -61,7 +61,7 @@ repo = Repo(args.repo_dir)
 commits = list(repo.iter_commits("kokkos_advance_b"))
 
 #git notes --ref refs/notes/productivity show
-for commit in commits:
+for commit in commits[:5]:
   try:
     print subprocess.check_output(["git", "--git-dir", os.path.join(args.repo_dir, ".git"), "notes", "--ref", PRODUCTIVITY_NTOES_NAMESPACE, "show", commit.hexsha])
   except:
