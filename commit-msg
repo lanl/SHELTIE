@@ -4,6 +4,7 @@
 #log path - should be consistent with other scripts
 LOG=.commit.log
 
+#argument passed by git
 COMMIT=$1
 
 #data about project
