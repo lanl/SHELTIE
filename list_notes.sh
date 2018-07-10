@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#cd into the directory where this script is stored
+cd "${BASH_SOURCE%/*}" || exit
+
+#then go up one level
+cd ..
+
 if [ -z $1 ]; then
     #look at the productivity logs by default
     ref=refs/notes/productivity
