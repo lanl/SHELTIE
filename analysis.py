@@ -15,8 +15,46 @@ def peek(l):
 	else:
 		return None, None
 
+def clean_term(term):
+	return term
+
+closure_pairs = {'{':'}'}
+                 #'[':']'}
+                 #'"':'"'}
+def clean_json(old_log): 
+	#convert the log string to a list
+	new_log = old_log
+	#create an empty stack
+	stack = []
+	for i in range(len(old_log)):
+		c = old_log[i]
+		top_i, top_c = peek(stack)
+		
+		#if c finishes the last closure pairing
+		if top_c in closure_pairs \
+		   and closure_pairs[top_c] == c:
+			stack.pop()
+			
+			#extract json term
+			term = old_log[top_i : i + 1]
+			try:
+				json.loads(term)
+			except:
+				#clean terms that won't load
+				new_term = clean_term(term)
+				new_log.replace(term, new_term)
+			
+			print('<{}>'.format(term))
+
+		#otherwise, if c starts a closure pairing
+		elif c in closure_pairs:
+			#push c onto the stack
+			stack.append((i, c))
+	
+	print(stack)
+	return ''.join(new_log)
+
 def listify(log_str):
-	print('starting sanitation work')
 	#convert the log string to a list
 	log_list =list(log_str)
 	list_offset = 0
@@ -25,6 +63,7 @@ def listify(log_str):
 	for str_i in range(len(log_str)):
 		list_i = list_offset + str_i
 		c = log_str[str_i]
+
 		if c == ':':
 			#push a ':' onto the stack
 			stack.append((list_i, ':'))
@@ -69,12 +108,13 @@ def listify(log_str):
 				stack.pop()
 			else:
 				#and we want to know if that's not the case
-				print(''.join(log_list[last_list_i - 20 : last_list_i + 20]))
-			
+				#print(''.join(log_list[last_list_i - 20 : last_list_i + 20]))
+				pass
+
 			#now push a '}' unto the stack
-			stack.append((list_i, '}'))
+			#stack.append((list_i, '}'))
 		
-		elif c == '{':
+		elif 0 : #c == '{':
 			#peek stack
 			last_list_i, last_c = peek(stack)
 
@@ -108,7 +148,7 @@ def listify(log_str):
 					stack.append((last_list_i + 1, '['))
 			#also, we just push ','s as buffers between '}' and '{'
 			#so if we pushed one last...
-			elif last_c == ',':
+			elif 0: #last_c == ',':
 				#...we should pop it
 				stack.pop()
 			 
@@ -155,7 +195,7 @@ except ValueError:
   # Fix bad commit logs  
   #json_productivity_log = json_productivity_log.replace('"user_responses":', '"user_responses":[')
   #json_productivity_log = json_productivity_log.replace('"time_categories":', '"time_categories":[')
-	json_productivity_log = add_top_level(json_productivity_log)
-	json_productivity_log = listify(json_productivity_log)
-	print(json_productivity_log[760:770])
+	#json_productivity_log = add_top_level(json_productivity_log)
+	json_productivity_log = clean_json(json_productivity_log)
+	#print(json_productivity_log)
 	print(json.loads(json_productivity_log))
