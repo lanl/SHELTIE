@@ -25,7 +25,7 @@ fi
 
 echo "Starting setup"
 #setup the main repo hooks
-for hook in commit-msg post-commit pre-push ; do
+for hook in commit-msg post-commit ; do
 	echo "Starting setup for $hook"	
 
 	hook_copy=$MAIN_REPO/.git/hooks/$hook
