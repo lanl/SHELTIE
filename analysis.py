@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 
-#from old_json import test_json
-from new_json import test_json
+from test_json import test_json
 
 import os.path
 import subprocess
@@ -23,27 +22,35 @@ def clean_term(term):
 
 	#make sure subterms within term are comma separated
 	if re.search(r'\{.*\}\s*\{.*\}', value):
-		value = re.sub(r'\}\s*\{','},{', value)
+		value = re.sub(r'\}\s*\{', '},{', value)
 
 	#enclose lists
 	if re.search(r'\{.*\}\s*,\s*\{.*\}', value) \
 	   and not re.match(r'\s*\[.*\]', value):
 		value = '[{}]'.format(value)
-		print('list enclosed: {}'.format(value))
-		
+		#print('list enclosed: {}'.format(value))
+
+	#remove trailing comma in list
+	elif re.search(r',\s*\]', value):
+		match = re.search(r',\s*]', value).group(0)
+		#try not to make the value string any shorter
+		substitute = ' ' * (len(match) - 1) + ']'
+		value = re.sub(r',\s*]', substitute, value)
+		#print('trailing comma removed: {}'.format(value))		
+
 	#quote non-numberic values which aren't already quoted
 	elif not re.match(r'\s*".*"', value):	
 		try:
 			float(value)
 		except:
 			value = '"{}"'.format(value)
-			print('non-numerical literal quoted: '.format(value))
+			#print('non-numerical literal quoted: {}'.format(value))
 	
 	#if we're doing this right, value should be parsable
 	try:
 		json.loads(value)
 	except:
-		print(value)
+		#print(value)
 		raise ValueError('value not parsable')
 
 	return '{}:{}'.format(key, value)
@@ -74,7 +81,7 @@ def clean_json(old_log):
 			try:
 				json.loads('{' + term + '}')
 			except:
-				print('{' + term + '}', list_offset, term_offset)
+				#print('{' + term + '}', list_offset, term_offset)
 				
 				#clean terms that won't load
 				new_term = clean_term(term)
@@ -94,16 +101,17 @@ def clean_json(old_log):
 			#reset the term offset
 			term_offset = 0
 	
-	print(stack)
+	#print(stack)
 	return ''.join(new_log)
 
 def add_top_level(log):
 	#TODO: check whether or not log already has a top level
-	#if re.match(r'\s*\{\s*".*"\s*:\s*\{.*\}*\}\s*$', log):
-	#	return log
-	#else:
-	print('added top level')
-	return '{"log":' + log + '}'
+	#in the general case
+	if re.match(r'\s*\{\s*"log"\s*:', log):
+		return log
+	else:
+		#print('added top level')
+		return '{"log":' + log + '}'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("repo_dir", help="The repo that contains the productivity logs as notes")
@@ -128,16 +136,14 @@ commits = list(repo.iter_commits("master"))
 #      pass
 
 
-test_json = test_json.replace("\n", "")
+for json_productivity_log in test_json:
+	json_productivity_log = json_productivity_log.replace("\n", "")
 
-#print test_json
-
-json_productivity_log = test_json
-
-try:
-  print json.loads(json_productivity_log)
-except ValueError:
-  # Fix bad commit logs  
-	json_productivity_log = add_top_level(json_productivity_log)
-	json_productivity_log = clean_json(json_productivity_log)
-	print(json.loads(json_productivity_log))
+	try:
+		print json.loads(json_productivity_log)
+	except ValueError:
+		# Fix bad commit logs  
+		json_productivity_log = add_top_level(json_productivity_log)
+		json_productivity_log = clean_json(json_productivity_log)
+		#print(json_productivity_log[1124:207529])
+		print(json.loads(json_productivity_log))
