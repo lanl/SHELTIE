@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
-from test_json import test_json
+#from old_json import test_json
+from new_json import test_json
 
 import os.path
 import subprocess
@@ -8,6 +9,7 @@ import sys
 import json
 import argparse
 from git import Repo
+import re
 
 def peek(l):
 	if l:
@@ -16,7 +18,35 @@ def peek(l):
 		return None, None
 
 def clean_term(term):
-	return term
+	term_parts = term.split(':')
+	key, value = term_parts[0], ':'.join(term_parts[1:])
+
+	#make sure subterms within term are comma separated
+	if re.search(r'\{.*\}\s*\{.*\}', value):
+		value = re.sub(r'\}\s*\{','},{', value)
+
+	#enclose lists
+	if re.search(r'\{.*\}\s*,\s*\{.*\}', value) \
+	   and not re.match(r'\s*\[.*\]', value):
+		value = '[{}]'.format(value)
+		print('list enclosed: {}'.format(value))
+		
+	#quote non-numberic values which aren't already quoted
+	elif not re.match(r'\s*".*"', value):	
+		try:
+			float(value)
+		except:
+			value = '"{}"'.format(value)
+			print('non-numerical literal quoted: '.format(value))
+	
+	#if we're doing this right, value should be parsable
+	try:
+		json.loads(value)
+	except:
+		print(value)
+		raise ValueError('value not parsable')
+
+	return '{}:{}'.format(key, value)
 
 closure_pairs = {'{':'}'}
                  #'[':']'}
@@ -24,141 +54,56 @@ closure_pairs = {'{':'}'}
 def clean_json(old_log): 
 	#convert the log string to a list
 	new_log = old_log
+	#keep track of the difference between the lengths of the two logs
+	list_offset = 0
 	#create an empty stack
 	stack = []
 	for i in range(len(old_log)):
 		c = old_log[i]
-		top_i, top_c = peek(stack)
-		
+		new_i = i + list_offset
+		top_new_i, top_c = peek(stack)
+
 		#if c finishes the last closure pairing
 		if top_c in closure_pairs \
 		   and closure_pairs[top_c] == c:
 			stack.pop()
 			
-			#extract json term
-			term = old_log[top_i : i + 1]
+			#extract json term without enclosing {}
+			term = new_log[top_new_i + 1 : new_i]
+				
 			try:
-				json.loads(term)
+				json.loads('{' + term + '}')
 			except:
+				print('{' + term + '}', list_offset, term_offset)
+				
 				#clean terms that won't load
 				new_term = clean_term(term)
-				new_log.replace(term, new_term)
+				new_log = new_log.replace(term, new_term)
 			
-			print('<{}>'.format(term))
+				#update offsets
+				d_len = len(new_term) - len(term)
+				term_offset += d_len #update the offset for the top element on the stack
+				list_offset += d_len
+				new_i = i + list_offset
 
 		#otherwise, if c starts a closure pairing
 		elif c in closure_pairs:
 			#push c onto the stack
-			stack.append((i, c))
+			stack.append((new_i, c))
+
+			#reset the term offset
+			term_offset = 0
 	
 	print(stack)
 	return ''.join(new_log)
 
-def listify(log_str):
-	#convert the log string to a list
-	log_list =list(log_str)
-	list_offset = 0
-	#create an empty stack
-	stack = []
-	for str_i in range(len(log_str)):
-		list_i = list_offset + str_i
-		c = log_str[str_i]
-
-		if c == ':':
-			#push a ':' onto the stack
-			stack.append((list_i, ':'))
-		elif c == ',':
-			#peek the stack
-			last_list_i, last_c = peek(stack)
-
-			#if we pushed a ':' last...
-			if last_c == ':':
-				#...put a '[' after it in the list
-				log_list.insert(last_list_i + 1 ,'[')
-				#update the offset
-				list_offset += 1				
-				list_i += 1
-
-				#then push a '[' onto the stack
-				stack.append((last_list_i + 1, '['))
-
-			#push a ',' onto the stack
-			stack.append((list_i, ','))
-			
-		elif c == '}':
-			#peek the stack
-			last_list_i, last_c = peek(stack)
-
-			#if we pushed a '[' last...
-			if last_c == '[':
-				#...put a ']' before the current '}' in the list
-				log_list.insert(list_i, ']')
-				#update the offset
-				list_offset += 1
-
-				#then pop the '[' from the list
-				stack.pop()
-			
-			#peek the stack
-			last_list_i, last_c = peek(stack)
-			
-			#we should have a ':' on the top of the stack now
-			if last_c == ':':
-				#so if we do, pop it off
-				stack.pop()
-			else:
-				#and we want to know if that's not the case
-				#print(''.join(log_list[last_list_i - 20 : last_list_i + 20]))
-				pass
-
-			#now push a '}' unto the stack
-			#stack.append((list_i, '}'))
-		
-		elif 0 : #c == '{':
-			#peek stack
-			last_list_i, last_c = peek(stack)
-
-			#a '{' shouldn't come immediately after a '}'
-			#so if we pushed one last...
-			if last_c == '}':
-				#...then we need to add a ',' after it
-				log_list.insert(last_list_i + 1, ',')
-				#update the offset
-				list_offset += 1
-			
-				#and the we should pop it
-				stack.pop()
-	
-				#now we need to proceed as if we just found a ','
-				#so hold onto the index of the ',' we just inserted
-				list_i = last_list_i + 1
-				
-				#peek the stack
-				last_list_i, last_c = peek(stack)
-
-				#if we pushed a ':' last...
-				if last_c == ':':
-					#...put a '[' after it in the list
-					log_list.insert(last_list_i + 1 ,'[')
-					#update the offset
-					list_offset += 1				
-					list_i += 1
-
-					#then push a '[' onto the stack
-					stack.append((last_list_i + 1, '['))
-			#also, we just push ','s as buffers between '}' and '{'
-			#so if we pushed one last...
-			elif 0: #last_c == ',':
-				#...we should pop it
-				stack.pop()
-			 
-	return ''.join(log_list)
-
-def add_top_level(log_str):
-	log_list = list(log_str)
-	list_offset = 0
-	
-	return '{"log":' + ''.join(log_list) + '}'
+def add_top_level(log):
+	#TODO: check whether or not log already has a top level
+	#if re.match(r'\s*\{\s*".*"\s*:\s*\{.*\}*\}\s*$', log):
+	#	return log
+	#else:
+	print('added top level')
+	return '{"log":' + log + '}'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("repo_dir", help="The repo that contains the productivity logs as notes")
@@ -193,9 +138,6 @@ try:
   print json.loads(json_productivity_log)
 except ValueError:
   # Fix bad commit logs  
-  #json_productivity_log = json_productivity_log.replace('"user_responses":', '"user_responses":[')
-  #json_productivity_log = json_productivity_log.replace('"time_categories":', '"time_categories":[')
-	#json_productivity_log = add_top_level(json_productivity_log)
+	json_productivity_log = add_top_level(json_productivity_log)
 	json_productivity_log = clean_json(json_productivity_log)
-	#print(json_productivity_log)
 	print(json.loads(json_productivity_log))
