@@ -43,7 +43,7 @@ echo '{"user_responses":[' >> $LOG
 #as a description of the work done
 printf '\t{"description":"' >> $LOG
 grep -v '^#' $COMMIT >> $LOG
-printf '"},\n' >> $LOG
+printf '"}' >> $LOG
 
 #enable user input; assigns stdin to keyboard
 exec < /dev/tty
@@ -62,6 +62,8 @@ echo ''
 #only ask the main body of questions if the user wants to make
 #a log; otherwise only make an automatic record
 if [ "$record_log" = 'y' ]; then
+	#add a ',\n' after the description
+	printf ',\n' >> $LOG 
 
 	echo '###############'
 	echo '# Work Stages #'
@@ -188,6 +190,9 @@ if [ "$record_log" = 'y' ]; then
 
 	#end NASA-TLX info
 	printf '\t]}\n' >> $LOG
+else
+	#only add a \n after description
+	printf '\n' >> $LOG
 fi
 
 #close stdin back up
@@ -212,7 +217,6 @@ do
     files+=" $f"                                                                   
 done                                                                               
 
-echo "$files"
 IFS=' ' read -r -a files <<< $files
 #write info on every file in the list to the log file
 printf '\t{"files":[\n' >> $LOG
