@@ -45,6 +45,13 @@ for hook in commit-msg post-commit ; do
 	echo "Setup complete for $hook"
 done
 
+#remove any depricated hooks
+for hook in $MAIN_REPO/.git/hooks/{pre-push} ; do
+  if [ -f "$hook" ]; then
+        rm "$hook"
+  fi
+done
+
 echo "Setup complete for all hooks"
 
 #switch into main repo
