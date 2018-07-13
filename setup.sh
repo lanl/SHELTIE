@@ -53,19 +53,19 @@ cd $MAIN_REPO
 for remote in $(git remote) ; do
 	#get git to fetch logs along with everything else
 	FETCH_CONFIG=$(git config --get remote."$remote".fetch) 
-	if [[ $FETCH_CONFIG = *+refs/notes/productivity:refs/remotes/origin/notes/productivity* ]] ; then
+	if [[ $FETCH_CONFIG = *+refs/notes/productivity:refs/notes/"$remote"/productivity* ]] ; then
 		echo "remote $remote already fetching logs"
 	else
-		git config --add remote."$remote".fetch +refs/notes/productivity:refs/remotes/origin/notes/productivity
+		git config --add remote."$remote".fetch +refs/notes/productivity:refs/notes/"$remote"/productivity
 		echo "remote $remote configured to fetch logs"
 	fi
 	
 	#get git to push logs along with everything else
 	PUSH_CONFIG=$(git config --get remote."$remote".push) 
-	if [[ $PUSH_CONFIG = *+refs/notes/productivity:refs/remotes/origin/notes/productivity* ]] ; then
+	if [[ $PUSH_CONFIG = *+refs/notes/productivity:refs/notes/"$remote"/productivity* ]] ; then
 		echo "remote $remote already pushing logs"
 	else
-		git config --add remote."$remote".push +refs/notes/productivity:refs/remotes/origin/notes/productivity
+		git config --add remote."$remote".push +refs/notes/productivity:refs/notes/"$remote"/productivity
 		echo "remote $remote configured to push logs"
 	fi
 done
