@@ -1,5 +1,7 @@
 #!/bin/bash
 
+LOGS_REF=refs/notes/productivity
+
 #cd into the directory where this script is stored
 cd "${BASH_SOURCE%/*}" || exit
 
@@ -46,3 +48,56 @@ for hook in commit-msg post-commit pre-push ; do
 done
 
 echo "Setup complete for all hooks"
+
+#switch into main repo
+cd $MAIN_REPO
+
+#make sure that the logs will be properly conncatenated during a rebase
+#by adding LOGS_REF to notes.rewriteRef, if it isn't already in it
+REWRITE_REF=$(git config --get notes.rewriteRef)
+
+if [ -z "$REWRITE_REF" ] ; then
+	#if rewriteRef not set, just set it to LOGS_REF
+	git config --unset-all notes.rewriteRef
+	git config --add notes.rewriteRef "$LOGS_REF"
+else
+	#otherwise, make sure LOGS_REF isn't already in REWRITE_REF
+	REWRITE_REF_LIST=${REWRITE_REF//,/ }
+
+	logs_ref_found=false
+	for ref in $REWRITE_REF_LIST ; do
+		
+		if [[ "$LOGS_REF" = "$ref" ]]; then
+			logs_ref_found=true
+		fi
+
+	done
+
+	#if LOGS_REF isn't already in there, add it
+	if ! $logs_ref_found ; then
+		git config --unset-all notes.rewriteRef
+		git config --add notes.rewriteRef "$REWRITE_REF,$LOGS_REF"
+	fi
+fi
+
+for remote in $(git remote) ; do
+	#get git to fetch logs along with everything else
+	FETCH_CONFIG=$(git config --get remote."$remote".fetch) 
+	if [[ $FETCH_CONFIG = *+refs/notes/productivity:refs/notes/productivity* ]] ; then
+		echo "remote $remote already fetching logs"
+	else
+		git config --add remote."$remote".fetch +refs/notes/productivity:refs/notes/productivity
+		echo "remote $remote configured to fetch logs"
+	fi
+	
+	#get git to push logs along with everything else
+	PUSH_CONFIG=$(git config --get remote."$remote".push) 
+	if [[ $PUSH_CONFIG = *+refs/notes/productivity:refs/notes/productivity* ]] ; then
+		echo "remote $remote already pushing logs"
+	else
+		git config --add remote."$remote".push +refs/notes/productivity:refs/notes/productivity
+		echo "remote $remote configured to push logs"
+	fi
+done
+
+echo "setup complete"
