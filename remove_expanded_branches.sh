@@ -10,6 +10,9 @@ if [ ! -z "${ON_A_PROD_BRANCH}" ]; then
     exit
 fi
 
+#get rid of the extra files (seems to interfere with branch removal)
+rm productivity_log_*
+
 BRANCH_LIST=`git branch --list productivity_log_*`
 echo "$BRANCH_LIST"
 
