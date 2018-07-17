@@ -58,6 +58,11 @@ echo "Setup complete for all hooks"
 #switch into main repo
 cd $MAIN_REPO
 
+#clear the existing notes merge strategy
+git config --unset-all notes.mergeStrategy
+#set the merge strategy for notes
+git config --add notes.mergeStrategy "union"
+
 for remote in $(git remote) ; do
 	#get git to fetch logs along with everything else
 	FETCH_CONFIG=$(git config --get remote."$remote".fetch) 
@@ -77,5 +82,7 @@ for remote in $(git remote) ; do
 		echo "remote $remote configured to push logs"
 	fi
 done
+
+#REWRITE_REF_CONFIG=$(git config --get 
 
 echo "setup complete"
