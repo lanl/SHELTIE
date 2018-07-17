@@ -20,10 +20,12 @@ def clean_term(term):
 	term_parts = term.split(':')
 	key, value = term_parts[0], ':'.join(term_parts[1:])
 
+	#print(term)
 	#make sure subterms within term are comma separated
 	if re.search(r'\{.*\}\s*\{.*\}', value):
 		value = re.sub(r'\}\s*\{', '},{', value)
-
+		#print('added commas: {}'.format(value))
+		
 	#enclose lists
 	if re.search(r'\{.*\}\s*,\s*\{.*\}', value) \
 	   and not re.match(r'\s*\[.*\]', value):
@@ -32,11 +34,20 @@ def clean_term(term):
 
 	#remove trailing comma in list
 	elif re.search(r',\s*\]', value):
-		match = re.search(r',\s*]', value).group(0)
+		match = re.search(r',\s*\]', value).group(0)
 		#try not to make the value string any shorter
 		substitute = ' ' * (len(match) - 1) + ']'
-		value = re.sub(r',\s*]', substitute, value)
+		value = re.sub(r',\s*\]', substitute, value)
 		#print('trailing comma removed: {}'.format(value))		
+
+	#remove trailing comma before end of value
+	elif re.search(r',\s*$', value):
+		match = re.search(r',\s*$', value).group(0)
+		#try not to make the value string any shorter
+		substitute = ' ' * len(match)
+		value = re.sub(r',\s*$', substitute, value)
+		#print('trailing comma removed: {}'.format(value))		
+		
 
 	#quote non-numberic values which aren't already quoted
 	elif not re.match(r'\s*".*"', value):	
@@ -46,14 +57,17 @@ def clean_term(term):
 			value = '"{}"'.format(value)
 			#print('non-numerical literal quoted: {}'.format(value))
 	
+	term = '{}:{}'.format(key, value)
+	term = '{' + term + '}'	
+
 	#if we're doing this right, value should be parsable
 	try:
-		json.loads(value)
+		json.loads(term)
 	except:
-		print(value)
+		print(term)
 		raise ValueError('value not parsable')
 
-	return '{}:{}'.format(key, value)
+	return term
 
 closure_pairs = {'{':'}'}
                  #'[':']'}
@@ -75,16 +89,16 @@ def clean_json(old_log):
 		   and closure_pairs[top_c] == c:
 			stack.pop()
 			
-			#extract json term without enclosing {}
-			term = new_log[top_new_i + 1 : new_i]
-				
+			#extract json term
+			term = new_log[top_new_i : new_i + 1]
+					
 			try:
-				json.loads('{' + term + '}')
+				json.loads(term)
 			except:
-				#print('{' + term + '}', list_offset, term_offset)
+				#print(term)
 				
 				#clean terms that won't load
-				new_term = clean_term(term)
+				new_term = clean_term(term[1:-1])
 				new_log = new_log.replace(term, new_term)
 			
 				#update offsets
@@ -101,7 +115,7 @@ def clean_json(old_log):
 			#reset the term offset
 			term_offset = 0
 	
-	#print(stack)
+	##print(stack)
 	return ''.join(new_log)
 
 def add_top_level(log):
@@ -142,17 +156,22 @@ for json_productivity_log in logs:
 		
 	for sublog in sublogs:
 		sublog = sublog.replace("\n", "")
+		sublog = sublog.replace("\t", " ")
 		try:
 			log_list.append(json.loads(sublog))
 		except ValueError:
 			# Fix bad commit logs  
+			#sublog += '}' * 2
 			sublog = add_top_level(sublog)
 			sublog = clean_json(sublog)
-			
-			print(sublog)
-			print(sublog[65800:65900])
-			print(sublog[65888])
-			log_list.append(json.loads(sublog))
+			print('Log parsed')
+			try:	
+				log_list.append(json.loads(sublog))
+			except ValueError:
+				print(sublog)
+				#print(sublog[65800:65900])
+				#print(sublog[65888])
+				log_list.append(json.loads(sublog))
 
 
 
