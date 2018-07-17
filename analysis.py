@@ -125,25 +125,28 @@ PRODUCTIVITY_NOTES_NAMESPACE="refs/notes/productivity"
 
 repo = Repo(args.repo_dir)
 
-commits = list(repo.iter_commits("master"))
-#list(repo.iter_commits("kokkos_advance_b"))
+commits = list(repo.iter_commits("sharrell"))
 
 #git notes --ref refs/notes/productivity show
-#for commit in commits[:5]:
-#  try:
-#    print subprocess.check_output(["git", "--git-dir", os.path.join(args.repo_dir, ".git"), "notes", "--ref", PRODUCTIVITY_NOTES_NAMESPACE, "show", commit.hexsha])
-#  except:
-#      pass
+# git notes --ref refs/notes/productivity show eaa1b0f4a7ee65ab33d0ec0e28f6fdc04fd8fbe2
+logs = []
+for commit in commits:
+  try:
+    logs.append(subprocess.check_output(["git", "--git-dir", os.path.join(args.repo_dir, ".git"), "notes", "--ref", PRODUCTIVITY_NOTES_NAMESPACE, "show", commit.hexsha]))
+  except:
+      pass
 
-
-for json_productivity_log in test_json:
+log_list = []
+for json_productivity_log in logs:
 	json_productivity_log = json_productivity_log.replace("\n", "")
-
 	try:
-		print json.loads(json_productivity_log)
+                log_list.append(json.loads(json_productivity_log))
 	except ValueError:
 		# Fix bad commit logs  
 		json_productivity_log = add_top_level(json_productivity_log)
 		json_productivity_log = clean_json(json_productivity_log)
 		#print(json_productivity_log[1124:207529])
-		print(json.loads(json_productivity_log))
+                log_list.append(json.loads(json_productivity_log))
+
+
+
