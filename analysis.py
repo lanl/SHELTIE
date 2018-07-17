@@ -50,7 +50,7 @@ def clean_term(term):
 	try:
 		json.loads(value)
 	except:
-		#print(value)
+		print(value)
 		raise ValueError('value not parsable')
 
 	return '{}:{}'.format(key, value)
@@ -138,15 +138,21 @@ for commit in commits:
 
 log_list = []
 for json_productivity_log in logs:
-	json_productivity_log = json_productivity_log.replace("\n", "")
-	try:
-                log_list.append(json.loads(json_productivity_log))
-	except ValueError:
-		# Fix bad commit logs  
-		json_productivity_log = add_top_level(json_productivity_log)
-		json_productivity_log = clean_json(json_productivity_log)
-		#print(json_productivity_log[1124:207529])
-                log_list.append(json.loads(json_productivity_log))
+	sublogs = re.split(r'productivity log for commit [0-9a-f]* in branch \w*', json_productivity_log, re.MULTILINE)
+		
+	for sublog in sublogs:
+		sublog = sublog.replace("\n", "")
+		try:
+			log_list.append(json.loads(sublog))
+		except ValueError:
+			# Fix bad commit logs  
+			sublog = add_top_level(sublog)
+			sublog = clean_json(sublog)
+			
+			print(sublog)
+			print(sublog[65800:65900])
+			print(sublog[65888])
+			log_list.append(json.loads(sublog))
 
 
 
