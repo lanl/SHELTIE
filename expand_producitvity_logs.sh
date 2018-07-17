@@ -1,4 +1,8 @@
 #!/bin/bash
+
+#change into the given dir
+cd "$1"
+
 NOTES_REF=refs/notes/productivity
 
 NOTES_LIST=`git notes --ref $NOTES_REF list`

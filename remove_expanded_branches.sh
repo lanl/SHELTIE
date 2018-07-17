@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#switch into the specified dir
+cd "$1"
+
 ON_A_PROD_BRANCH=`git branch --list productivity_log_* | grep '\*'`
 
 if [ ! -z "${ON_A_PROD_BRANCH}" ]; then
@@ -8,6 +11,7 @@ if [ ! -z "${ON_A_PROD_BRANCH}" ]; then
 fi
 
 BRANCH_LIST=`git branch --list productivity_log_*`
+echo "$BRANCH_LIST"
 
 for BR in $BRANCH_LIST
 do
