@@ -9,6 +9,7 @@ import json
 import argparse
 from git import Repo
 import re
+import pprint
 
 def peek(l):
 	if l:
@@ -16,7 +17,55 @@ def peek(l):
 	else:
 		return None, None
 
-def clean_term(term):
+#options for should_clean
+def is_not_parsable(term, stack):
+	try:
+		json.loads(term)
+		return False
+	except ValueError:
+		return True
+
+def is_at_top_level(term, stack):
+	return len(stack) == 1
+
+def is_inside_top_level_list(term, stack):
+	top_i, top_c = peek(stack)
+	return top_c == '[' and len(stack) == 1
+
+def is_non_file_list(term, stack):
+	term_parts = term[1:-1].split(':')
+	key, value = term_parts[0], ':'.join(term_parts[1:])
+
+	#print('checking value: {}'.format(value))
+	
+	return key != '"files"' \
+	   and re.match(r'\s*\[.*\]', value)
+	
+#options for clean_json
+def merge_terms(term, stack):
+	term_parts = term.split(':')
+	key, value = term_parts[0], ':'.join(term_parts[1:])
+	
+	term = ' {}:{} '.format(key, value)
+	#print('merged term: {}'.format(term))
+	return term
+
+def list_to_dict(term, stack):
+	term_parts = term.split(':')
+	key, value = term_parts[0], ':'.join(term_parts[1:])
+	
+	#print('orig term: {}'.format(term))
+	value = clean_json(value[1:-1], \
+	                   closure_pairs={'{':'}'}, \
+	                   clean_term=merge_terms, \
+	                   should_clean=is_at_top_level)
+	value = '{' + value + '}'
+
+	#print('wrapped list: {}'.format(value))
+
+	return '{' + '{}:{}'.format(key, value) + '}'
+
+def clean_json_term(term, stack):
 	term_parts = term.split(':')
 	key, value = term_parts[0], ':'.join(term_parts[1:])
 
@@ -56,7 +105,7 @@ def clean_term(term):
 		except:
 			value = '"{}"'.format(value)
 			#print('non-numerical literal quoted: {}'.format(value))
-	
+
 	term = '{}:{}'.format(key, value)
 	term = '{' + term + '}'	
 
@@ -69,10 +118,10 @@ def clean_term(term):
 
 	return term
 
-closure_pairs = {'{':'}'}
-                 #'[':']'}
-                 #'"':'"'}
-def clean_json(old_log): 
+def clean_json(old_log, \
+	             closure_pairs={'{':'}'}, \
+	             should_clean=is_not_parsable, \
+	             clean_term=clean_json_term): 
 	#convert the log string to a list
 	new_log = old_log
 	#keep track of the difference between the lengths of the two logs
@@ -87,18 +136,14 @@ def clean_json(old_log):
 		#if c finishes the last closure pairing
 		if top_c in closure_pairs \
 		   and closure_pairs[top_c] == c:
-			stack.pop()
 			
 			#extract json term
 			term = new_log[top_new_i : new_i + 1]
 					
-			try:
-				json.loads(term)
-			except:
-				#print(term)
+			if should_clean(term, stack):
 				
 				#clean terms that won't load
-				new_term = clean_term(term[1:-1])
+				new_term = clean_term(term[1:-1], stack)
 				new_log = new_log.replace(term, new_term)
 			
 				#update offsets
@@ -106,6 +151,8 @@ def clean_json(old_log):
 				term_offset += d_len #update the offset for the top element on the stack
 				list_offset += d_len
 				new_i = i + list_offset
+			
+			stack.pop()
 
 		#otherwise, if c starts a closure pairing
 		elif c in closure_pairs:
@@ -158,17 +205,19 @@ for json_productivity_log in logs:
 		sublog = sublog.replace("\n", "")
 		sublog = sublog.replace("\t", " ")
 		try:
-			log_list.append(json.loads(sublog))
+			temp = clean_json(sublog, should_clean=is_non_file_list, clean_term=list_to_dict)
+			log_list.append(json.loads(temp))
 		except ValueError:
 			# Fix bad commit logs  
 			#sublog += '}' * 2
 			sublog = add_top_level(sublog)
 			sublog = clean_json(sublog)
+			sublog = clean_json(sublog, should_clean=is_non_file_list, clean_term=list_to_dict)
 			print('Log parsed')
 			try:	
 				log_list.append(json.loads(sublog))
 			except ValueError:
-				print(sublog)
+				#print(sublog)
 				#print(sublog[65800:65900])
 				#print(sublog[65888])
 				log_list.append(json.loads(sublog))
