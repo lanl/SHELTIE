@@ -164,14 +164,40 @@ for json_productivity_log in logs:
 			#sublog += '}' * 2
 			sublog = add_top_level(sublog)
 			sublog = clean_json(sublog)
-			print('Log parsed')
+#			print('Log parsed')
 			try:	
 				log_list.append(json.loads(sublog))
 			except ValueError:
-				print(sublog)
+	#			print(sublog)
 				#print(sublog[65800:65900])
 				#print(sublog[65888])
 				log_list.append(json.loads(sublog))
 
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+#pp.pprint(log_list)
 
+for log in log_list:
+    report = log['log']
+    if len(report) == 0: 
+        pp.pprint(log)
+        continue
+    if 'user_responses' not in report[0]: 
+        pp.pprint(log)
+        continue
+    user_responses = report[0]['user_responses']
+    if len(user_responses) == 1: continue
+    time_categories = report[0]['user_responses'][1]['time_categories']
+    #nasa_tlx = report['NASA-TLX']
 
+    for category in time_categories:
+        if 'refectoring' in category: break
+    else:
+        time_categories.append({'refactoring': [{u'time_spent': 0.0},{u'difficulty': 0}]})
+
+    total_time = (time_categories[0]['planning'][0]['time_spent'] + 
+            time_categories['coding']['time_spent'] + 
+            time_categories['refactoring']['time_spent'] + 
+            time_categories['debuging']['time_spent'] + 
+            time_categories['optimising']['time_spent'])
+    print total_time
