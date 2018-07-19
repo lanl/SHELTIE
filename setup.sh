@@ -47,10 +47,23 @@ for hook in commit-msg post-commit pre-push ; do
 	echo "Setup complete for $hook"
 done
 
+#remove any depricated hooks
+for hook in $MAIN_REPO/.git/hooks/{pre-push} ; do
+  if [ -f "$hook" ]; then
+    rm "$hook"
+    echo "removed depricated hook $hook"
+  fi
+done
+
 echo "Setup complete for all hooks"
 
 #switch into main repo
 cd $MAIN_REPO
+
+#clear the existing notes merge strategy
+git config --unset-all notes.mergeStrategy
+#set the merge strategy for notes
+git config --add notes.mergeStrategy "union"
 
 #make sure that the logs will be properly conncatenated during a rebase
 #by adding LOGS_REF to notes.rewriteRef, if it isn't already in it
