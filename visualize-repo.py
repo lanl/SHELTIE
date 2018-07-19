@@ -1,12 +1,16 @@
 #!/usr/bin/env python2
 
-from cleansing import parse_and_clean
+from cleansing import parse_sublogs
 
 import git
 import networkx
 import sys
+import os.path
 import matplotlib.pyplot as plt
 import subprocess
+import pprint
+
+PRODUCTIVITY_NOTES_NAMESPACE = 'refs/notes/productivity'
 
 def build_graph(repo):
 	graph = networkx.DiGraph()
@@ -43,21 +47,143 @@ def build_log_dict(repo_graph, repo_dir):
 				 PRODUCTIVITY_NOTES_NAMESPACE, \
 				 "show", \
 				 commit.hexsha])
-			logs_dict[commit] = log
-		except:
-				pass
+			#print(log)
+			
+			#only hold onto the first sublog for now
+			logs_dict[commit] = parse_sublogs(log)[0]
+		except Exception as e:
+			#print(e)
+			pass
 	
 	return logs_dict
 
+def filter_out_commits_without_logs(graph, logs):
+	nodes = list(graph.nodes())
+	for commit in nodes:
+		if commit not in logs:
+			in_edges = graph.in_edges(commit)
+			out_edges = graph.out_edges(commit)
+			if in_edges and out_edges:
+				for pred, commit in in_edges:
+					for commit, desc in out_edges:
+						if (pred, desc) not in graph.edges:
+							graph.add_edge(pred, desc)
+			graph.remove_node(commit)
+
+	return graph
+
+def get_branch(commit, branches):
+	try:
+		log = logs[commit]
+		#pprint.pprint(log)
+		branch = log['log']['autogeneratated']['git_info']['branch']
+		#print('commit %s on branch %s'.format(str(commit.hexsha), branch))
+
+		print(branch)
+
+		#add branch if it hasn't already been found			
+		if branch not in branches:
+			branches[branch] = len(branches)
+		
+		return branches[branch]
+
+	except Exception as e:
+		#print(e)
+		#print('error ^^')
+		return branches[None]
+
+def get_time(commit):
+	return commit.authored_date
+
+def time_by_branch_layout(graph, repo, logs):
+	branches = {None : 0}
+
+	posns = {}
+	for commit in graph.nodes:
+		posns[commit] = (get_time(commit), get_branch(commit, branches))
+	
+	return posns, branches
+
+def get_min_dist(commit, branch_distances):
+	min_dist = float('inf')
+	for branch_head in branch_distances:
+		if commit in branch_distances[branch_head]:
+			branch_dist = branch_distances[branch_head][commit]
+			if branch_dist < min_dist:
+				min_dist = branch_dist
+	return min_dist
+
+def dist_from_head_by_branch_layout(graph, repo, logs):
+	branches = {None : 0}
+
+	branch_distances = {}
+	for branch_head in repo.branches:
+		if branch_head.commit in graph.nodes:
+			branch_distances[branch_head.commit] = \
+				networkx.shortest_path_length(graph, source=branch_head.commit)
+	#pprint.pprint(branch_distances)
+
+	posns = {}
+	for commit in graph.nodes:
+		posns[commit] = (-get_min_dist(commit, branch_distances), \
+		                 get_branch(commit, branches))
+	
+	return posns, branches
+
+#written with reference to: [1]
+#https://stackoverflow.com/questions/13517614/draw-different-color-for-nodes-in-networkx-based-on-their-node-value
+def colour_by_branch(graph, branches):
+	colours = []
+	for commit in graph.nodes:
+		branch_num = get_branch(commit, branches)
+		colours.append( 1.0 * branch_num / len(branches))
+
+	return colours
+
+#build everything we need for ploting
 repo_dir = sys.argv[1]
 repo = git.Repo(repo_dir)
 graph = build_graph(repo)
 logs = build_log_dict(graph, repo_dir)
+print('--- logs parsed ---')
 
-plt.subplot(121)
-pos = networkx.kamada_kawai_layout(graph)
-networkx.draw(graph, \
-              pos, \
-              node_size=10, \
-							edge_width=1)
+graph = filter_out_commits_without_logs(graph, logs)
+
+#posns, branches = dist_from_head_by_branch_layout(graph, repo, logs)
+#posns, branches = time_by_branch_layout(graph, repo, logs)
+
+#plotting done with reference to : [2]
+#https://stackoverflow.com/questions/22992009/legend-in-python-networkx
+layouts =[dist_from_head_by_branch_layout, time_by_branch_layout]
+jet = plt.get_cmap('jet')
+fig = plt.figure(1)
+
+for i in range(len(layouts)):
+	posns, branches = layouts[i](graph, repo, logs)
+	colours = colour_by_branch(graph, branches)
+	#posns = networkx.kamada_kawai_layout(graph)
+	#print(posns)
+
+	subplot = fig.add_subplot(1, len(layouts), 1 + i)
+	for branch in branches:
+		subplot.plot([0], [0],
+		          color=jet(1.0 * branches[branch] / len(branches)),\
+		          label=branch)
+
+	#plot it (colouring with reference to [1])
+	plt.subplot(subplot)
+	networkx.draw_networkx(graph, \
+								posns, \
+								cmap=jet, \
+								node_color=colours, \
+								node_size=50, \
+								edge_width=1, \
+								arrows=False, \
+	              with_labels=False, \
+	              ax=subplot)	
+	plt.axis('off')
+	fig.set_facecolor('w')
+
+	plt.legend(loc='top')
+fig.tight_layout()
 plt.show()
