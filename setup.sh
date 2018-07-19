@@ -1,5 +1,7 @@
 #!/bin/bash
 
+LOGS_REF=refs/notes/productivity
+
 #cd into the directory where this script is stored
 cd "${BASH_SOURCE%/*}" || exit
 
@@ -25,7 +27,7 @@ fi
 
 echo "Starting setup"
 #setup the main repo hooks
-for hook in commit-msg post-commit ; do
+for hook in commit-msg post-commit pre-push ; do
 	echo "Starting setup for $hook"	
 
 	hook_copy=$MAIN_REPO/.git/hooks/$hook
@@ -62,6 +64,34 @@ cd $MAIN_REPO
 git config --unset-all notes.mergeStrategy
 #set the merge strategy for notes
 git config --add notes.mergeStrategy "union"
+
+#make sure that the logs will be properly conncatenated during a rebase
+#by adding LOGS_REF to notes.rewriteRef, if it isn't already in it
+REWRITE_REF=$(git config --get notes.rewriteRef)
+
+if [ -z "$REWRITE_REF" ] ; then
+	#if rewriteRef not set, just set it to LOGS_REF
+	git config --unset-all notes.rewriteRef
+	git config --add notes.rewriteRef "$LOGS_REF"
+else
+	#otherwise, make sure LOGS_REF isn't already in REWRITE_REF
+	REWRITE_REF_LIST=${REWRITE_REF//,/ }
+
+	logs_ref_found=false
+	for ref in $REWRITE_REF_LIST ; do
+		
+		if [[ "$LOGS_REF" = "$ref" ]]; then
+			logs_ref_found=true
+		fi
+
+	done
+
+	#if LOGS_REF isn't already in there, add it
+	if ! $logs_ref_found ; then
+		git config --unset-all notes.rewriteRef
+		git config --add notes.rewriteRef "$REWRITE_REF,$LOGS_REF"
+	fi
+fi
 
 for remote in $(git remote) ; do
 	#get git to fetch logs along with everything else
