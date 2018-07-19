@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 from test_json import test_json
-from cleansing import parse_and_clean
+from cleansing import parse_sublogs
 
 import os.path
 import subprocess
@@ -36,11 +36,10 @@ for commit in commits:
       pass
 
 log_list = []
-for json_productivity_log in logs:
-	sublogs = re.split(r'productivity log for commit [0-9a-f]* in branch \w*', json_productivity_log, re.MULTILINE)
-		
-	for sublog in sublogs:
-		log_list.append(parse_and_clean(sublog))	
+for log in logs:
+	for sublog in parse_sublogs(log):
+		log_list.append(sublog)	
+
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 #pp.pprint(log_list)

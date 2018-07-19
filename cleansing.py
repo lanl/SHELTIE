@@ -184,3 +184,13 @@ def parse_and_clean(log):
 				#print(log[65800:65900])
 				#print(log[65888])
 				return json.loads(log)
+
+def parse_sublogs(log):
+	sublogs = re.split(r'productivity log for commit [0-9a-f]* in branch \w*', \
+	                   log, \
+	                   re.MULTILINE)
+		
+	for i in range(len(sublogs)):
+		sublogs[i] = parse_and_clean(sublogs[i])
+
+	return sublogs
