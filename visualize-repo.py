@@ -7,6 +7,8 @@ import networkx
 import sys
 import os.path
 import matplotlib.pyplot as plt
+from matplotlib import colors
+import matplotlib
 import subprocess
 import pprint
 
@@ -163,7 +165,7 @@ def dist_with_time_order_by_branch_layout(graph, repo, logs):
 
 #written with reference to: [1]
 #https://stackoverflow.com/questions/13517614/draw-different-color-for-nodes-in-networkx-based-on-their-node-value
-def colour_by_branch(graph, branches, cmap=plt.get_cmap('jet')):
+def colour_by_branch(graph, branches, logs, cmap=plt.get_cmap('jet')):
 	colours = []
 	for commit in graph.nodes:
 		branch = get_branch(commit, branches)
@@ -171,8 +173,26 @@ def colour_by_branch(graph, branches, cmap=plt.get_cmap('jet')):
 		#print(branch, 1.0 * branches[branch] / len(branches))
 	return colours
 
-def colour_by_frustration(graph, branches, cmap):
-	pass
+def colour_by_log_val(graph, branches, logs, get_log_val, cmap=plt.get_cmap('seismic')):
+	named_colours = colors.get_named_colors_mapping()
+	colours = []
+	for commit in graph.nodes:
+		log = logs[commit]
+		try:
+			#should be normalised between 0 and 1
+			log_val = get_log_val(log) 
+			#print(log_val)
+			colours.append(cmap(log_val))
+		except:
+			#print('log_val not found')
+			colours.append(named_colours['g'])
+
+	return colours
+
+colour_by_frustration = \
+	lambda graph, branches, logs: \
+		colour_by_log_val(graph, branches, logs, \
+		                  lambda log: 1.0 * log['log']['user_responses']['NASA_TLX']['frustration'] / 7)
 
 #build everything we need for ploting
 repo_dir = sys.argv[1]
@@ -192,35 +212,50 @@ graph = filter_out_commits_without_logs(graph, logs)
           # time_by_branch_layout,
           # dist_with_time_order_by_branch_layout]
 layouts = [time_by_branch_layout]
+colourings = [colour_by_frustration,
+              colour_by_branch]
 jet = plt.get_cmap('jet')
 fig = plt.figure(1)
 
 for i in range(len(layouts)):
-	posns, branches = layouts[i](graph, repo, logs)
-	colours = colour_by_branch(graph, branches)
-	#posns = networkx.kamada_kawai_layout(graph)
-	#print(posns)
+	for j in range(len(colourings)):
+		posns, branches = layouts[i](graph, repo, logs)
+		colours = colourings[j](graph, branches, logs)
+		#colours = colour_by_branch(graph, branches)
+		#posns = networkx.kamada_kawai_layout(graph)
+		#print(posns)
 
-	subplot = fig.add_subplot(1, len(layouts), 1 + i)
-	for branch in branches:
-		subplot.plot([0], [0],
-		          color=jet(1.0 * branches[branch] / len(branches)),\
-		          label=str(branch))
-		#print(branch, 1.0 * branches[branch] / len(branches))
-	#plot it (colouring with reference to [1])
-	plt.subplot(subplot)
-	networkx.draw_networkx(graph, \
-								posns, \
-								#cmap=jet, \
-								node_color=colours, \
-								node_size=50, \
-								edge_width=1, \
-								arrows=False, \
-	              with_labels=False, \
-	              ax=subplot)	
-	plt.axis('off')
-	fig.set_facecolor('w')
+		subplot = fig.add_subplot(1, \
+		                          len(layouts) * len(colourings), \
+		                          1 + j*len(layouts) + i)
+		#print(subplot)
+		b_list = ['' for b in branches]
+		for branch in branches:
+			b_list[branches[branch]] = branch
 
-	plt.legend(loc='upper center')
+		#for branch in b_list:
+		#	subplot.plot([0], [0],
+		#						marker='o', \
+		#						color=jet(1.0 * branches[branch] / len(branches)),\
+		#						label=str(branch))
+		#	#print(branch, 1.0 * branches[branch] / len(branches))
+		##plot it (colouring with reference to [1])
+		#plt.subplot(subplot)
+		
+		#pprint.pprint(posns)
+		#pprint.pprint(colours)
+		networkx.draw_networkx(graph, \
+										posns, \
+										#cmap=jet, \
+										node_color=colours, \
+										node_size=50, \
+										edge_width=1, \
+										arrows=False, \
+										with_labels=False, \
+										ax=subplot)	
+		plt.axis('off')
+
+		#plt.legend(loc='upper center')
+fig.set_facecolor('w')
 fig.tight_layout()
 plt.show()
