@@ -79,20 +79,33 @@ def get_branch(commit, branches):
 		branch = log['log']['autogeneratated']['git_info']['branch']
 		#print('commit %s on branch %s'.format(str(commit.hexsha), branch))
 
-		print(branch)
+		#print(branch)
 
 		#add branch if it hasn't already been found			
 		if branch not in branches:
 			branches[branch] = len(branches)
 		
-		return branches[branch]
+		return branch
 
 	except Exception as e:
 		#print(e)
 		#print('error ^^')
-		return branches[None]
+		return None
+
+def get_branch_lists(graph, branches=None):
+	if not branches:
+		branches = {}
+	branch_lists = {}
+	for commit in graph:
+		branch = get_branch(commit, branches)
+		if branch not in branch_lists:
+			branch_lists[branch] = [commit]
+		else:
+			branch_lists[branch].append(commit)
+	return branch_lists
 
 def get_time(commit):
+	print(commit)
 	return commit.authored_date
 
 def time_by_branch_layout(graph, repo, logs):
@@ -100,7 +113,8 @@ def time_by_branch_layout(graph, repo, logs):
 
 	posns = {}
 	for commit in graph.nodes:
-		posns[commit] = (get_time(commit), get_branch(commit, branches))
+		posns[commit] = (get_time(commit), branches[get_branch(commit, branches)])
+	
 	
 	return posns, branches
 
@@ -126,18 +140,31 @@ def dist_from_head_by_branch_layout(graph, repo, logs):
 	posns = {}
 	for commit in graph.nodes:
 		posns[commit] = (-get_min_dist(commit, branch_distances), \
-		                 get_branch(commit, branches))
+		                 branches[get_branch(commit, branches)])
 	
 	return posns, branches
+
+def dist_with_time_order_by_branch_layout(graph, repo, logs):
+	dist_by_branch, branches = dist_from_head_by_branch_layout(graph, repo, logs)
+	branch_lists = get_branch_lists(graph, branches=branches)
+
+	branch_indicies = {}
+	for branch in branch_lists:
+		branch_lists[branch] = sorted(branch_lists[branch], key=get_time)
+		branch_indicies[branch] = 0
+
+	
+
+	return dist_by_branch, branches
 
 #written with reference to: [1]
 #https://stackoverflow.com/questions/13517614/draw-different-color-for-nodes-in-networkx-based-on-their-node-value
 def colour_by_branch(graph, branches):
 	colours = []
 	for commit in graph.nodes:
-		branch_num = get_branch(commit, branches)
-		colours.append( 1.0 * branch_num / len(branches))
-
+		branch = get_branch(commit, branches)
+		colours.append( 1.0 * branches[branch] / len(branches))
+		#print(branch, 1.0 * branches[branch] / len(branches))
 	return colours
 
 #build everything we need for ploting
@@ -154,7 +181,9 @@ graph = filter_out_commits_without_logs(graph, logs)
 
 #plotting done with reference to : [2]
 #https://stackoverflow.com/questions/22992009/legend-in-python-networkx
-layouts =[dist_from_head_by_branch_layout, time_by_branch_layout]
+layouts = [dist_from_head_by_branch_layout, 
+           time_by_branch_layout,
+           dist_with_time_order_by_branch_layout]
 jet = plt.get_cmap('jet')
 fig = plt.figure(1)
 
@@ -168,8 +197,8 @@ for i in range(len(layouts)):
 	for branch in branches:
 		subplot.plot([0], [0],
 		          color=jet(1.0 * branches[branch] / len(branches)),\
-		          label=branch)
-
+		          label=str(branch))
+		#print(branch, 1.0 * branches[branch] / len(branches))
 	#plot it (colouring with reference to [1])
 	plt.subplot(subplot)
 	networkx.draw_networkx(graph, \
@@ -184,6 +213,6 @@ for i in range(len(layouts)):
 	plt.axis('off')
 	fig.set_facecolor('w')
 
-	plt.legend(loc='top')
+	plt.legend(loc='upper center')
 fig.tight_layout()
 plt.show()
