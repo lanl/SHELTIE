@@ -12,6 +12,7 @@ import re
 import pprint
 import git
 import matplotlib
+import binascii
 
 def peek(l):
 	if l:
@@ -228,7 +229,7 @@ for json_productivity_log in logs:
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 #pp.pprint(log_list)
-
+lines_per_commit = []
 total_time_per_commit = []
 
 for log in log_list:
@@ -253,6 +254,16 @@ for log in log_list:
             time_categories['debugging']['time_spent'] + 
             time_categories['optimising']['time_spent'])
     total_time_per_commit.append(total_time)
-    commit = git.Commit(repo, log[0])
-    print commit.parents
-    #print commit.diff(commit.parents[0])
+    commit = git.Commit(repo, binascii.unhexlify(log[0]))
+    lines_changed = 0
+    print commit.diff(commit.parents[0])[0].diff
+    diff = subprocess.check_output(["git", "--git-dir", os.path.join(args.repo_dir, ".git"),  'diff', commit.hexsha, commit.parents[0].hexsha])
+    sloc = 0
+    for line in diff.split('\n'):
+        if not (line.startswith("-") or line.startswith("+")): continue
+        if line.strip() == "+" or line.strip() == "-": continue
+        if line.startswith('+++') or line.startswith('---'): continue
+        sloc += 1
+
+    total_time_per_commit = sloc
+
