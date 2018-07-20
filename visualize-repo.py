@@ -114,8 +114,12 @@ def time_by_branch_layout(graph, repo, logs):
 	posns = {}
 	for commit in graph.nodes:
 		posns[commit] = (get_time(commit), branches[get_branch(commit, branches)])
-	
-	
+	min_x_commit = min(posns, key=lambda commit: posns[commit][0])
+	min_x, y = posns[min_x_commit]
+	for commit in posns:
+		x, y = posns[commit]
+		posns[commit] = (x - min_x, y)
+
 	return posns, branches
 
 def get_min_dist(commit, branch_distances):
@@ -152,20 +156,23 @@ def dist_with_time_order_by_branch_layout(graph, repo, logs):
 	for branch in branch_lists:
 		branch_lists[branch] = sorted(branch_lists[branch], key=get_time)
 		branch_indicies[branch] = 0
-
+	
 	
 
 	return dist_by_branch, branches
 
 #written with reference to: [1]
 #https://stackoverflow.com/questions/13517614/draw-different-color-for-nodes-in-networkx-based-on-their-node-value
-def colour_by_branch(graph, branches):
+def colour_by_branch(graph, branches, cmap=plt.get_cmap('jet')):
 	colours = []
 	for commit in graph.nodes:
 		branch = get_branch(commit, branches)
-		colours.append( 1.0 * branches[branch] / len(branches))
+		colours.append( cmap(1.0 * branches[branch] / len(branches)))
 		#print(branch, 1.0 * branches[branch] / len(branches))
 	return colours
+
+def colour_by_frustration(graph, branches, cmap):
+	pass
 
 #build everything we need for ploting
 repo_dir = sys.argv[1]
@@ -181,9 +188,10 @@ graph = filter_out_commits_without_logs(graph, logs)
 
 #plotting done with reference to : [2]
 #https://stackoverflow.com/questions/22992009/legend-in-python-networkx
-layouts = [dist_from_head_by_branch_layout, 
-           time_by_branch_layout,
-           dist_with_time_order_by_branch_layout]
+#layouts = [dist_from_head_by_branch_layout, 
+          # time_by_branch_layout,
+          # dist_with_time_order_by_branch_layout]
+layouts = [time_by_branch_layout]
 jet = plt.get_cmap('jet')
 fig = plt.figure(1)
 
@@ -203,7 +211,7 @@ for i in range(len(layouts)):
 	plt.subplot(subplot)
 	networkx.draw_networkx(graph, \
 								posns, \
-								cmap=jet, \
+								#cmap=jet, \
 								node_color=colours, \
 								node_size=50, \
 								edge_width=1, \
