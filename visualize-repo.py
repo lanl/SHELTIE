@@ -107,7 +107,6 @@ def get_branch_lists(graph, branches=None):
 	return branch_lists
 
 def get_time(commit):
-	print(commit)
 	return commit.authored_date
 
 def time_by_branch_layout(graph, repo, logs):
@@ -181,18 +180,21 @@ def colour_by_log_val(graph, branches, logs, get_log_val, cmap=plt.get_cmap('sei
 		try:
 			#should be normalised between 0 and 1
 			log_val = get_log_val(log) 
-			#print(log_val)
+			print(log_val)
 			colours.append(cmap(log_val))
-		except:
+		except Exception as e:
 			print('log_val not found')
-			colours.append(named_colours['g'])
+			print(e)
+			colours.append(named_colours['tab:gray'])
 
 	return colours
 
+def wrap_colour_by_log(get_log_val):
+	return lambda graph, branches, logs: \
+		colour_by_log_val(graph, branches, logs, get_log_val)
+
 colour_by_frustration = \
-	lambda graph, branches, logs: \
-		colour_by_log_val(graph, branches, logs, \
-		                  lambda log: 1.0 * log['log']['user_responses']['NASA_TLX']['frustration'] / 7)
+	wrap_colour_by_log(lambda log: 1.0 * log['log']['user_responses']['NASA-TLX']['frustration'] / 7.0)
 
 #build everything we need for ploting
 repo_dir = sys.argv[1]
@@ -243,7 +245,7 @@ for i in range(len(layouts)):
 		#plt.subplot(subplot)
 		
 		#pprint.pprint(posns)
-		#pprint.pprint(colours)
+		pprint.pprint(colours)
 		networkx.draw_networkx(graph, \
 										posns, \
 										#cmap=jet, \
