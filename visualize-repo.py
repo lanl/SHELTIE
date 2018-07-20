@@ -184,7 +184,7 @@ def colour_by_log_val(graph, branches, logs, get_log_val, cmap=plt.get_cmap('sei
 			#print(log_val)
 			colours.append(cmap(log_val))
 		except:
-			#print('log_val not found')
+			print('log_val not found')
 			colours.append(named_colours['g'])
 
 	return colours
