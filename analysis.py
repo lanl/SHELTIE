@@ -10,6 +10,8 @@ import argparse
 from git import Repo
 import re
 import pprint
+import git
+import matplotlib
 
 def peek(l):
 	if l:
@@ -193,20 +195,21 @@ commits = list(repo.iter_commits("sharrell"))
 logs = []
 for commit in commits:
   try:
-    logs.append(subprocess.check_output(["git", "--git-dir", os.path.join(args.repo_dir, ".git"), "notes", "--ref", PRODUCTIVITY_NOTES_NAMESPACE, "show", commit.hexsha]))
+    logs.append([commit.hexsha, subprocess.check_output(["git", "--git-dir", os.path.join(args.repo_dir, ".git"), "notes", "--ref", PRODUCTIVITY_NOTES_NAMESPACE, "show", commit.hexsha])])
   except:
       pass
 
 log_list = []
 for json_productivity_log in logs:
-	sublogs = re.split(r'productivity log for commit [0-9a-f]* in branch \w*', json_productivity_log, re.MULTILINE)
+        sublogs = json_productivity_log[1]
+	sublogs = re.split(r'productivity log for commit [0-9a-f]* in branch \w*', sublogs, re.MULTILINE)
 		
 	for sublog in sublogs:
 		sublog = sublog.replace("\n", "")
 		sublog = sublog.replace("\t", " ")
 		try:
 			temp = clean_json(sublog, should_clean=is_non_file_list, clean_term=list_to_dict)
-			log_list.append(json.loads(temp))
+			log_list.append([json_productivity_log[0], json.loads(temp)])
 		except ValueError:
 			# Fix bad commit logs  
 			#sublog += '}' * 2
@@ -215,38 +218,41 @@ for json_productivity_log in logs:
 			sublog = clean_json(sublog, should_clean=is_non_file_list, clean_term=list_to_dict)
 			print('Log parsed')
 			try:	
-				log_list.append(json.loads(sublog))
+				log_list.append([json_productivity_log[0], json.loads(sublog)])
 			except ValueError:
 				#print(sublog)
 				#print(sublog[65800:65900])
 				#print(sublog[65888])
-				log_list.append(json.loads(sublog))
+				log_list.append([json_productivity_log[0], json.loads(sublog)])
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 #pp.pprint(log_list)
 
+total_time_per_commit = []
+
 for log in log_list:
-    report = log['log']
-    if len(report) == 0: 
-        pp.pprint(log)
-        continue
-    if 'user_responses' not in report[0]: 
-        pp.pprint(log)
-        continue
-    user_responses = report[0]['user_responses']
+    report = log[1]['log']
+    if not 'user_responses' in report: continue
+    if len(report) == 0: continue
+    user_responses = report['user_responses']
+
+
     if len(user_responses) == 1: continue
-    time_categories = report[0]['user_responses'][1]['time_categories']
+    time_categories = report['user_responses']['time_categories']
     #nasa_tlx = report['NASA-TLX']
 
     for category in time_categories:
         if 'refectoring' in category: break
     else:
-        time_categories.append({'refactoring': [{u'time_spent': 0.0},{u'difficulty': 0}]})
-
-    total_time = (time_categories[0]['planning'][0]['time_spent'] + 
+        time_categories['refactoring'] = {u'time_spent': 0.0, u'difficulty': 0}
+    #pp.pprint(log)
+    total_time = (time_categories['planning']['time_spent'] + 
             time_categories['coding']['time_spent'] + 
             time_categories['refactoring']['time_spent'] + 
-            time_categories['debuging']['time_spent'] + 
+            time_categories['debugging']['time_spent'] + 
             time_categories['optimising']['time_spent'])
-    print total_time
+    total_time_per_commit.append(total_time)
+    commit = git.Commit(repo, log[0])
+    print commit.parents
+    #print commit.diff(commit.parents[0])
