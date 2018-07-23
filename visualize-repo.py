@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib
 import subprocess
 import pprint
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 PRODUCTIVITY_NOTES_NAMESPACE = 'refs/notes/productivity'
 
@@ -148,7 +149,9 @@ def colour_by_branch(graph, branches, logs, cmap=plt.get_cmap('jet')):
 		#print(branch, 1.0 * branches[branch] / len(branches))
 	return colours
 
-def colour_by_log_val(graph, branches, logs, get_log_val, cmap='seismic', norm=colors.Normalize()):
+def colour_by_log_val(graph, branches, logs, get_log_val, \
+                      cmap='seismic', \
+                      norm=colors.Normalize(vmin=1, vmax=7)):
 	grey = colors.get_named_colors_mapping()['tab:gray']
 	grey = colors.to_rgba(grey)
 	cmap = plt.get_cmap(cmap)
@@ -158,7 +161,7 @@ def colour_by_log_val(graph, branches, logs, get_log_val, cmap='seismic', norm=c
 			log = logs[commit]
 			#should be normalised between 0 and 1
 			log_val = get_log_val(log) 
-			colour = cmap(log_val)
+			colour = cmap(norm(log_val))
 			colours.append(colour)
 			#print(log_val, colour)
 		except Exception as e:
@@ -166,7 +169,7 @@ def colour_by_log_val(graph, branches, logs, get_log_val, cmap='seismic', norm=c
 			#print(e)
 			colours.append(grey)
 
-	return colours
+	return colours, cmap, norm
 
 def wrap_colour_by_log(get_log_val, cmap='seismic', norm=colors.Normalize()):
 	return lambda graph, branches, logs: \
@@ -174,7 +177,7 @@ def wrap_colour_by_log(get_log_val, cmap='seismic', norm=colors.Normalize()):
 
 colour_by_frustration = \
 	wrap_colour_by_log(lambda log: \
-		1.0 * log['log']['user_responses']['NASA-TLX']['frustration'] / 7.0)
+		log['log']['user_responses']['NASA-TLX']['frustration'])
 #colour_by_kokkos = \
 #	wrap_colour_by_log(lambda log: \
 #		float(log['log']['user_responses']['tags']['Kokkos']), \
@@ -199,7 +202,7 @@ def colour_by_delta_sloc(graph, branches, logs, cmap='coolwarm'):
 	cmap = plt.get_cmap(cmap)
 	colours = [get_delta_sloc(commit) for commit in graph.nodes]
 
-	return colours
+	return colours, cmap, None
 
 #build everything we need for ploting
 repo_dir = sys.argv[1]
@@ -209,8 +212,8 @@ logs = build_log_dict(graph, repo_dir)
 print('--- logs parsed ---')
 #print(graph)
 
-#graph = filter_out_commits_without_logs(graph, logs)
-graph = filter_out_commits_not_between_logged_commits(graph, logs)
+graph = filter_out_commits_without_logs(graph, logs)
+#graph = filter_out_commits_not_between_logged_commits(graph, logs)
 posns, branches = dist_with_time_order_by_branch_layout(graph, repo, logs)
 #posns, branches = dist_from_head_by_branch_layout(graph, repo, logs)
 #posns, branches = time_by_branch_layout(graph, repo, logs)
@@ -221,10 +224,10 @@ posns, branches = dist_with_time_order_by_branch_layout(graph, repo, logs)
           # time_by_branch_layout,
           # dist_with_time_order_by_branch_layout]
 layouts = [time_by_branch_layout]
-layouts = [#networkx.shell_layout,
-           networkx.spring_layout
+#layouts = [#networkx.shell_layout,
+           #networkx.spring_layout
            #networkx.spectral_layout
-          ]
+          #]
 colourings = [colour_by_frustration
               #colour_by_branch,
               #colour_by_kokkos,
@@ -235,11 +238,11 @@ fig = plt.figure(1)
 
 for i in range(len(layouts)):
 	for j in range(len(colourings)):
-		#posns, branches = layouts[i](graph, repo, logs)
-		colours = colourings[j](graph, branches, logs)
+		posns, branches = layouts[i](graph, repo, logs)
+		colours, cmap, norm = colourings[j](graph, branches, logs)
 		#colours = colour_by_branch(graph, branches)
 		#posns = networkx.kamada_kawai_layout(graph)
-		posns = layouts[i](graph)
+		#posns = layouts[i](graph)
 		#print(posns)
 
 		subplot = fig.add_subplot(1, \
@@ -265,14 +268,28 @@ for i in range(len(layouts)):
 		#pprint.pprint(posns)
 		#pprint.pprint(colours)
 		networkx.draw_networkx(graph, \
-										posns, \
-										#cmap=jet, \
-										node_color=colours, \
-										node_size=50, \
-										edge_width=1, \
-										arrows=True, \
-										with_labels=False, \
-										ax=subplot)	
+													 posns, \
+													 #cmap=jet, \
+													 node_color=colours, \
+													 node_size=50, \
+													 edge_width=1, \
+													 arrows=False, \
+													 with_labels=False, \
+													 ax=subplot)
+
+
+		#based on: [3]
+		#https://stackoverflow.com/questions/26739248/how-to-add-a-simple-colorbar-to-a-network-graph-plot-in-python	
+		scalar_map = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+		scalar_map._A = []
+		cbar = plt.colorbar(scalar_map, orientation='vertical', ticks=[1, 4, 7])	
+		
+		#based on: [4]
+		#https://matplotlib.org/gallery/ticks_and_spines/colorbar_tick_labelling_demo.html
+		cbar.ax.set_yticklabels(['Very Low', 'About Average', 'Very High'])
+		
+		subplot.set_title('Frustration Reported by Commit')
+	
 		plt.axis('off')
 
 		#plt.legend(loc='upper center')
