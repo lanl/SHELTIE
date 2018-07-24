@@ -89,14 +89,15 @@ def get_time(commit):
 def time_by_branch_layout(graph, repo, logs):
 	branches = {None : 0}
 
-	posns = {}
+	xs = []
 	for commit in graph.nodes:
-		posns[commit] = (get_time(commit), branches[get_branch(commit, branches)])
-	min_x_commit = min(posns, key=lambda commit: posns[commit][0])
-	min_x, y = posns[min_x_commit]
-	for commit in posns:
-		x, y = posns[commit]
-		posns[commit] = (x - min_x, y)
+		xs.append((commit, get_time(commit)))
+	xs.sort(key=lambda (commit, time): time)	
+
+	posns = {}
+	for i in range(len(xs)):
+		commit, x = xs[i]
+		posns[commit] = (i, branches[get_branch(commit, branches)])
 
 	return posns, branches
 
@@ -133,9 +134,7 @@ def dist_with_time_order_by_branch_layout(graph, repo, logs):
 	branch_indicies = {}
 	for branch in branch_lists:
 		branch_lists[branch] = sorted(branch_lists[branch], key=get_time)
-		branch_indicies[branch] = 0
-	
-	
+		branch_indicies[branch] = 0	
 
 	return dist_by_branch, branches
 
@@ -171,7 +170,7 @@ def colour_by_log_val(graph, branches, logs, get_log_val, \
 
 	return colours, cmap, norm
 
-def wrap_colour_by_log(get_log_val, cmap='seismic', norm=colors.Normalize()):
+def wrap_colour_by_log(get_log_val, cmap='coolwarm', norm=colors.Normalize()):
 	return lambda graph, branches, logs: \
 		colour_by_log_val(graph, branches, logs, get_log_val, cmap)
 
@@ -284,13 +283,37 @@ for i in range(len(layouts)):
 		scalar_map._A = []
 		cbar = plt.colorbar(scalar_map, orientation='vertical', ticks=[1, 4, 7])	
 		
+		cbar.set_label('Frustration', rotation=270, labelpad=16)	
+	
 		#based on: [4]
 		#https://matplotlib.org/gallery/ticks_and_spines/colorbar_tick_labelling_demo.html
-		cbar.ax.set_yticklabels(['Very Low', 'About Average', 'Very High'])
+		cbar.ax.set_yticklabels(['Very Low', 'About Average', 'Very High'], rotation=270, verticalalignment='center')
+	
+		#based on: [5]
+		#https://3diagramsperpage.wordpress.com/2014/05/25/arrowheads-for-axis-in-matplotlib/
+		xmin, xmax = subplot.get_xlim() 
+		ymin, ymax = subplot.get_ylim()
+
+		dps = fig.dpi_scale_trans.inverted()
+		bbox = subplot.get_window_extent().transformed(dps)
+		width, height = bbox.width, bbox.height
+	
+		hw = 1./20.*(ymax-ymin) 
+		hl = 1./20.*(xmax-xmin)
+		lw = 1. # axis line width
+		ohg = 0.3 # arrow overhang
+
+		subplot.arrow(xmin, ymin, xmax-xmin, 0., fc='k', ec='k', lw = lw, 
+						 head_width=hw, head_length=hl, overhang = ohg, 
+						 length_includes_head= True, clip_on = False) 
 		
 		subplot.set_title('Frustration Reported by Commit')
-	
-		plt.axis('off')
+		subplot.set_xlabel('Time')
+		subplot.set_xticks([])
+		subplot.set_yticks([])
+		subplot.set_frame_on(False)
+			
+		#plt.axis('off')
 
 		#plt.legend(loc='upper center')
 fig.set_facecolor('w')
