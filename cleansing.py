@@ -1,5 +1,9 @@
 import json
 import re
+import networkx
+import git
+import subprocess
+import os.path
 
 def peek(l):
 	if l:
@@ -198,3 +202,53 @@ def parse_sublogs(log):
 		sublogs[i] = parse_and_clean(sublogs[i])
 
 	return sublogs
+
+
+def build_graph(repo):
+	graph = networkx.DiGraph()
+
+	def iter_parents(commit):
+		#don't process commits twice
+		if commit not in graph.nodes:
+			#print(commit)			
+			graph.add_node(commit)
+		
+		for parent in commit.parents:
+			#print(parent)
+			
+			#we shouldn't revist edges
+			if (commit, parent) not in graph.edges:
+				graph.add_edge(commit, parent)
+				#print(commit, parent)
+				iter_parents(parent)
+
+	for branch_head in repo.branches:
+		iter_parents(branch_head.commit)
+	
+	#print(graph)
+	return graph
+
+PRODUCTIVITY_NOTES_NAMESPACE = 'refs/notes/productivity'
+def build_log_dict(repo_graph, repo_dir):
+	logs_dict = {}
+	for commit in repo_graph.nodes:
+		#based on Stephen's work in analysis.py
+		try:
+			log = subprocess.check_output( \
+				["git", \
+				 "--git-dir",\
+				 os.path.join(repo_dir, ".git"),\
+				 "notes", \
+				 "--ref", \
+				 PRODUCTIVITY_NOTES_NAMESPACE, \
+				 "show", \
+				 commit.hexsha])
+			#print(log)
+			
+			#only hold onto the first sublog for now
+			logs_dict[commit] = parse_sublogs(log)[0]
+		except Exception as e:
+			#print(e)
+			pass
+	
+	return logs_dict
