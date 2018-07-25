@@ -7,7 +7,7 @@ import cleansing
 
 repo_path=sys.argv[1]
 git_path=os.path.join(repo_path, '.git')
-output = subprocess.check_output(["git", "--git-dir", git_path, "fsck", "--unreachable", "--no-reflogs"])
+output = subprocess.check_output(["git", "--git-dir", git_path, "fsck"])
 lines = output.split('\n')
 for line in lines:
 	if line:

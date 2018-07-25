@@ -6,10 +6,15 @@ if [ -z "REPO_PATH" ]; then
 fi
 cd "$REPO_PATH"
 
-UNREACHABLE_COMMITS=`git fsck --unreachable --no-reflogs 2> /dev/null | grep "commit" | awk '{print $3}'`
+UNREACHABLE_COMMITS=$(git fsck --unreachable --no-reflogs 2> /dev/null | grep "commit" | awk '{print $3}')
+BRANCHES=$(git branch)
+BRANCHES=${BRANCHES/\*/}
+REACHABLE_COMMITS=$(git rev-parse $BRANCHES)
+$echo $UNREACHABLE_COMMITS
+$echo $REACHABLE_COMMITS
 
 echo "unreachable commits are:"
-for COMM in $UNREACHABLE_COMMITS
+for COMM in $UNREACHABLE_COMMITS $REACHABLE_COMMITS
 do
     echo $COMM
 
