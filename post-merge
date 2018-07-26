@@ -1,0 +1,8 @@
+#!/bin/bash
+
+WAS_SQUASH="$1"
+
+for remote in $(git remote) ; do
+	remote_logs_ref=${LOGS_REF/notes/"remotes/$remote/notes"}
+	git notes --ref "$LOGS_REF" merge "$remote_logs_ref"
+done

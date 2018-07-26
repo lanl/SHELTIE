@@ -27,7 +27,7 @@ fi
 
 echo "Starting setup"
 #setup the main repo hooks
-for hook in commit-msg post-commit ; do
+for hook in commit-msg post-commit pre-push post-merge ; do
 	echo "Starting setup for $hook"	
 
 	hook_copy=$MAIN_REPO/.git/hooks/$hook
@@ -48,12 +48,12 @@ for hook in commit-msg post-commit ; do
 done
 
 #remove any depricated hooks
-for hook in $MAIN_REPO/.git/hooks/{pre-push} ; do
-  if [ -f "$hook" ]; then
-    rm "$hook"
-    echo "removed depricated hook $hook"
-  fi
-done
+#for hook in $MAIN_REPO/.git/hooks/{pre-push} ; do
+#  if [ -f "$hook" ]; then
+#    rm "$hook"
+#    echo "removed depricated hook $hook"
+#  fi
+#done
 
 echo "Setup complete for all hooks"
 

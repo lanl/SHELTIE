@@ -1,0 +1,13 @@
+#!/bin/bash
+
+REMOTE_NAME="$1"
+REMOTE_LOC="$2"
+BRANCH_NAME=$(git branch | grep "*" | cut -c2-)
+
+BREADCRUMB=.bread.crumb
+
+if [ -f ${BREADCRUMB} ]; then
+	exit
+fi
+
+git push ${REMOTE_NAME} ${BRANCH_NAME} 
