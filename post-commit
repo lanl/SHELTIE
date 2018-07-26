@@ -37,4 +37,9 @@ if [ -f "$LOG_PATH" ]; then
 
 	#delete log file, now that it has been saved as a git note
 	rm $LOG_PATH
+	
+	for remote in $(git remote) ; do
+		remote_logs_ref=${LOGS_REF/notes/"remotes/$remote/notes"}
+		git notes --ref "$LOGS_REF" merge "remote_logs_ref"
+	done
 fi
