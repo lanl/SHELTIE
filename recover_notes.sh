@@ -36,7 +36,8 @@ do
 		if [ "$RAW_MESSAGE" = "Notes added by 'git notes add'" ]; then
 			LOG=$(git show f57d98e7c6c303d73917a8a9036585edf4168198 | egrep "^\+" | grep -v "+++" | cut -c2-)
 			echo ${LOG} >> ${LOG_PATH}
-			git notes --ref ${NOTES_REF} add -F ${LOG_PATH} ${ANNOTATED_COMMIT}
+			git notes --ref ${NOTES_REF} add -f -F ${LOG_PATH} ${ANNOTATED_COMMIT}
+			rm ${LOG_PATH}
 		fi
 
     # This copying doesn't work yet...
