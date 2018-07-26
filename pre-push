@@ -10,4 +10,6 @@ if [ -f ${BREADCRUMB} ]; then
 	exit
 fi
 
-git push ${REMOTE_NAME} ${BRANCH_NAME} 
+echo 'done first call' > ${BREADCRUMB}
+git push ${REMOTE_NAME} ${BRANCH_NAME}
+rm ${BREADCRUMB} 
