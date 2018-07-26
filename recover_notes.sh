@@ -7,6 +7,12 @@ REPO_PATH="$1"
 if [ -z "REPO_PATH" ]; then
     exit 1
 fi
+
+OVERWRITE_OLD_LOGS=false
+if [ "$2" = "-f" ]; then
+	OVERWRITE_OLD_LOGS=true
+fi
+
 cd "$REPO_PATH"
 
 UNREACHABLE_COMMITS=$(git fsck --unreachable --no-reflogs 2> /dev/null | grep "commit" | awk '{print $3}')
@@ -36,7 +42,11 @@ do
 		if [ "$RAW_MESSAGE" = "Notes added by 'git notes add'" ]; then
 			LOG=$(git show f57d98e7c6c303d73917a8a9036585edf4168198 | egrep "^\+" | grep -v "+++" | cut -c2-)
 			echo ${LOG} >> ${LOG_PATH}
-			git notes --ref ${NOTES_REF} add -f -F ${LOG_PATH} ${ANNOTATED_COMMIT}
+			if $OVERWRITE_OLD_LOGS ; then
+				git notes --ref ${NOTES_REF} add -f -F ${LOG_PATH} ${ANNOTATED_COMMIT}
+			else
+				git notes --ref ${NOTES_REF} add -F ${LOG_PATH} ${ANNOTATED_COMMIT}
+			fi
 			rm ${LOG_PATH}
 		fi
 
