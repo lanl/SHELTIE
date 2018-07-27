@@ -27,7 +27,7 @@ fi
 
 echo "Starting setup"
 #setup the main repo hooks
-for hook in commit-msg post-commit ; do
+for hook in commit-msg post-commit pre-push post-merge ; do
 	echo "Starting setup for $hook"	
 
 	hook_copy=$MAIN_REPO/.git/hooks/$hook
@@ -48,12 +48,12 @@ for hook in commit-msg post-commit ; do
 done
 
 #remove any depricated hooks
-for hook in $MAIN_REPO/.git/hooks/{pre-push} ; do
-  if [ -f "$hook" ]; then
-    rm "$hook"
-    echo "removed depricated hook $hook"
-  fi
-done
+#for hook in $MAIN_REPO/.git/hooks/{pre-push} ; do
+#  if [ -f "$hook" ]; then
+#    rm "$hook"
+#    echo "removed depricated hook $hook"
+#  fi
+#done
 
 echo "Setup complete for all hooks"
 
@@ -106,13 +106,11 @@ for remote in $(git remote) ; do
 	#get git to push logs along with everything else
 	PUSH_CONFIG=$(git config --get remote."$remote".push) 
 	if [[ $PUSH_CONFIG = *refs/notes/productivity:refs/notes/productivity* ]] ; then
-		echo "remote $remote already pushing logs"
+		git config --unset remote."$remote".push refs/notes/productivity:refs/notes/productivity
+		echo "remote $remote no longer pushing logs by config"
 	else
-		git config --add remote."$remote".push refs/notes/productivity:refs/notes/productivity
-		echo "remote $remote configured to push logs"
+		echo "remote $remote already not pushing logs by config"
 	fi
 done
-
-#REWRITE_REF_CONFIG=$(git config --get 
 
 echo "setup complete"

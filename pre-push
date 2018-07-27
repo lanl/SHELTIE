@@ -1,0 +1,16 @@
+#!/bin/bash
+
+REMOTE_NAME="$1"
+REMOTE_LOC="$2"
+NOTES_REF=productivity
+
+echo "updating logs in remote $REMOTE_NAME"
+
+#fetch notes
+git fetch $REMOTE_NAME refs/notes/$NOTES_REF:refs/remotes/$REMOTE_NAME/notes/$NOTES_REF 2> /dev/null
+
+#then merge them
+git notes --ref refs/notes/$NOTES_REF merge -s cat_sort_uniq $REMOTE_NAME/notes/$NOTES_REF 2> /dev/null
+
+#and finally push them
+git push --no-verify $REMOTE_NAME refs/notes/$NOTES_REF:refs/notes/$NOTES_REF 2> /dev/null
