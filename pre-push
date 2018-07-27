@@ -2,26 +2,15 @@
 
 REMOTE_NAME="$1"
 REMOTE_LOC="$2"
-LOGS_REF=refs/notes/productivity
-
-BREADCRUMB=.bread.crumb
-
-if [ -f ${BREADCRUMB} ]; then
-	exit
-fi
-
-#leave a breadcrumb to stop implicit recursive calls
-echo 'first call begun' > ${BREADCRUMB}
+NOTES_REF=productivity
 
 echo "updating logs in remote $REMOTE_NAME"
 
 #fetch notes
-git fetch ${REMOTE_NAME} ${LOGS_REF}:${LOGS_REF/notes/"remotes/$REMOTE_NAME/notes"}
+git fetch $REMOTE_NAME refs/notes/$NOTES_REF:refs/remotes/$REMOTE_NAME/notes/$NOTES_REF
 
 #then merge them
-git notes --ref refs/notes/$NOTE_REF merge -s cat_sort_uniq ${NOTES_REF/refs/$REMOTE_NAME}
+git notes --ref refs/notes/$NOTES_REF merge -s cat_sort_uniq $REMOTE_NAME/notes/$NOTES_REF
 
 #and finally push them
-git push --no-verify ${REMOTE_NAME} ${LOGS_REF}:${LOGS_REF}
-
-rm ${BREADCRUMB} 
+git push --no-verify $REMOTE_NAME refs/notes/$NOTES_REF:refs/notes/$NOTES_REF
