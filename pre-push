@@ -2,7 +2,7 @@
 
 REMOTE_NAME="$1"
 REMOTE_LOC="$2"
-BRANCH_NAME=$(git branch | grep "*" | cut -c2-)
+LOGS_REF=refs/notes/productivity
 
 BREADCRUMB=.bread.crumb
 
@@ -11,5 +11,5 @@ if [ -f ${BREADCRUMB} ]; then
 fi
 
 echo 'done first call' > ${BREADCRUMB}
-git push ${REMOTE_NAME} ${BRANCH_NAME}
+git push ${REMOTE_NAME} ${LOGS_REF}:${LOGS_REF}
 rm ${BREADCRUMB} 

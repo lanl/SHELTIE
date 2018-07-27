@@ -108,7 +108,7 @@ for remote in $(git remote) ; do
 	if [[ $PUSH_CONFIG = *refs/notes/productivity:refs/notes/productivity* ]] ; then
 		echo "remote $remote already pushing logs"
 	else
-		git config --add remote."$remote".push refs/notes/productivity:refs/notes/productivity
+		#git config --add remote."$remote".push refs/notes/productivity:refs/notes/productivity
 		echo "remote $remote configured to push logs"
 	fi
 done
