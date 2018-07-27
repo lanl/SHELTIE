@@ -10,6 +10,18 @@ if [ -f ${BREADCRUMB} ]; then
 	exit
 fi
 
-echo 'done first call' > ${BREADCRUMB}
-git push ${REMOTE_NAME} ${LOGS_REF}:${LOGS_REF}
+#leave a breadcrumb to stop implicit recursive calls
+echo 'first call begun' > ${BREADCRUMB}
+
+echo "updating logs in remote $REMOTE_NAME"
+
+#fetch notes
+git fetch ${REMOTE_NAME} ${LOGS_REF}:${LOGS_REF/notes/"remotes/$REMOTE_NAME/notes"}
+
+#then merge them
+git notes --ref refs/notes/$NOTE_REF merge -s cat_sort_uniq ${NOTES_REF/refs/$REMOTE_NAME}
+
+#and finally push them
+git push --no-verify ${REMOTE_NAME} ${LOGS_REF}:${LOGS_REF}
+
 rm ${BREADCRUMB} 
