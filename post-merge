@@ -10,5 +10,5 @@ for remote in $(git remote) ; do
 	#echo ${remote}
     remote_logs_ref=${LOGS_REF/notes/"remotes/$remote/notes"}
     #echo ${remote_logs_ref}
-    git notes --ref "$LOGS_REF" merge "$remote_logs_ref"
+    git notes --ref "$LOGS_REF" merge -s cat_sort_uniq "$remote_logs_ref" 2> /dev/null
 done
