@@ -1,8 +1,14 @@
 #!/bin/bash
 
+echo ${PWD}
+echo ${GIT_DIR}
+
 WAS_SQUASH="$1"
+LOGS_REF=refs/notes/productivity
 
 for remote in $(git remote) ; do
-	remote_logs_ref=${LOGS_REF/notes/"remotes/$remote/notes"}
-	git notes --ref "$LOGS_REF" merge "$remote_logs_ref"
+	#echo ${remote}
+    remote_logs_ref=${LOGS_REF/notes/"remotes/$remote/notes"}
+    #echo ${remote_logs_ref}
+    git notes --ref "$LOGS_REF" merge "$remote_logs_ref"
 done
