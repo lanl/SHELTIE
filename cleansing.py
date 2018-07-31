@@ -68,6 +68,11 @@ def clean_json_term(term, stack):
 	if re.search(r'\{.*\}\s*\{.*\}', value):
 		value = re.sub(r'\}\s*\{', '},{', value)
 		#print('added commas: {}'.format(value))
+	
+	#switch out known double quoted term that might cause issues
+	#with singled quoted version
+	elif re.search(r'"git push"', value):
+		value = re.sub(r'"git push"', '\'git push\'', value)
 		
 	#enclose lists
 	if re.search(r'\{.*\}\s*,\s*\{.*\}', value) \
@@ -89,8 +94,7 @@ def clean_json_term(term, stack):
 		#try not to make the value string any shorter
 		substitute = ' ' * len(match)
 		value = re.sub(r',\s*$', substitute, value)
-		#print('trailing comma removed: {}'.format(value))		
-		
+		#print('trailing comma removed: {}'.format(value))			
 
 	#quote non-numberic values which aren't already quoted
 	elif not re.match(r'\s*".*"', value):	
@@ -223,6 +227,9 @@ def build_graph(repo):
 				iter_parents(parent)
 
 	for branch_head in repo.branches:
+	#for branch_name in repo.git.branch('-a').split(u' '):
+		#print(branch_name)
+		#branch_head = repo.heads[branch_name]
 		iter_parents(branch_head.commit)
 	
 	#print(graph)
