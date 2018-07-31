@@ -40,7 +40,7 @@ do
     echo "   -- Message was: ${RAW_MESSAGE}"
 
 		if [ "$RAW_MESSAGE" = "Notes added by 'git notes add'" ]; then
-			LOG=$(git show f57d98e7c6c303d73917a8a9036585edf4168198 | egrep "^\+" | grep -v "+++" | cut -c2-)
+			LOG=$(git show ${COMM} | egrep "^\+" | grep -v "+++" | cut -c2-)
 			echo ${LOG} >> ${LOG_PATH}
 			if $OVERWRITE_OLD_LOGS ; then
 				git notes --ref ${NOTES_REF} add -f -F ${LOG_PATH} ${ANNOTATED_COMMIT}
