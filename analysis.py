@@ -39,9 +39,12 @@ for commit in commits:
   except:
 		pass
 log_list = []
-for hexsha, log in logs:
-	for sublog in parse_sublogs(log):
-		log_list.append([hexsha, sublog])	
+for hexsha, log in logs:	
+	try:
+		for sublog in parse_sublogs(log):
+			log_list.append([hexsha, sublog])	
+	except:
+		print(hexsha)
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
