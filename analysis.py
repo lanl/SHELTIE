@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 
 from test_json import test_json
-from cleansing import parse_sublogs
+from cleansing import parse_sublogs, build_graph
 
 import os.path
 import subprocess
@@ -27,7 +27,8 @@ PRODUCTIVITY_NOTES_NAMESPACE="refs/notes/productivity"
 
 repo = Repo(args.repo_dir)
 
-commits = list(repo.iter_commits("sharrell"))
+#commits = list(repo.iter_commits("sharrell"))
+commits = list(build_graph(repo).nodes)
 
 #git notes --ref refs/notes/productivity show
 # git notes --ref refs/notes/productivity show eaa1b0f4a7ee65ab33d0ec0e28f6fdc04fd8fbe2
@@ -36,8 +37,7 @@ for commit in commits:
   try:
     logs.append([commit.hexsha, subprocess.check_output(["git", "--git-dir", os.path.join(args.repo_dir, ".git"), "notes", "--ref", PRODUCTIVITY_NOTES_NAMESPACE, "show", commit.hexsha])])
   except:
-      pass
-
+		pass
 log_list = []
 for hexsha, log in logs:
 	for sublog in parse_sublogs(log):
