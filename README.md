@@ -10,9 +10,9 @@ collected.
 
 ## Overview:
 
-	This repo contains a few scripts designed to enable productivity
-	logging on a git repo. Most are git hooks, which will be automatically
-	executed by git after a commit is made.
+This repo contains a few scripts designed to enable productivity
+logging on a git repo. Most are git hooks, which will be automatically
+executed by git after a commit is made.
 
 ## Dependencies:
   
@@ -22,7 +22,7 @@ collected.
 
 ## Setup:
 
-1. run setup.sh, optionally passing in the path to the main repo setup.sh <main
+- run setup.sh, optionally passing in the path to the main repo setup.sh <main
    repo path> [by default, <main repo path> is one level above where setup.sh
    is stored]
 
