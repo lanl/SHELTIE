@@ -1,5 +1,7 @@
 # SHELTIE
 
+![logo](./docs/logo.png)
+
 Simple Hooks Enabling Logging Techniques through an Interactive Experience (SHELTIE)
 
 SHELTIE is comprised of a series of git hooks for collecting productivity
